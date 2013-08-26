@@ -171,19 +171,6 @@ public class Principal extends javax.swing.JFrame {
         }
     }
 
-    public void enter2(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            try {
-                descricao = txt_descricao.getText().toUpperCase();
-                descricao = descricao.replace(" ", "%");
-                listaProdutosbyDescricao();
-            } catch (Exception ex) {
-                Logger.getLogger(Principal.class
-                        .getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
-
     public void ctrl_V(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_V) {
             try {
@@ -272,6 +259,9 @@ public class Principal extends javax.swing.JFrame {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txt_descricaoKeyPressed(evt);
             }
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txt_descricaoKeyReleased(evt);
+            }
         });
 
         jLabel3.setText("Descrição:");
@@ -326,7 +316,7 @@ public class Principal extends javax.swing.JFrame {
                 .addGap(11, 11, 11)
                 .addGroup(pnl_fundoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 651, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         pnl_fundoLayout.setVerticalGroup(
@@ -361,8 +351,18 @@ public class Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_tabela1KeyPressed
 
     private void txt_descricaoKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_descricaoKeyPressed
-        enter2(evt);
     }//GEN-LAST:event_txt_descricaoKeyPressed
+
+    private void txt_descricaoKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_descricaoKeyReleased
+        try {
+                descricao = txt_descricao.getText().toUpperCase();
+                descricao = descricao.replace(" ", "%");
+                listaProdutosbyDescricao();
+            } catch (Exception ex) {
+                Logger.getLogger(Principal.class
+                        .getName()).log(Level.SEVERE, null, ex);
+            }
+    }//GEN-LAST:event_txt_descricaoKeyReleased
 
     /**
      * @param args the command line arguments
