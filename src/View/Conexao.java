@@ -114,7 +114,7 @@ public class Conexao extends javax.swing.JFrame {
 
     public void grava() {
         try {
-            pw = new PrintWriter(new FileWriter("c:/config.txt", false));
+            pw = new PrintWriter(new FileWriter("C:/NCM-app/src/Ctrl/config.txt", false));
             if (cbx_tipo.getSelectedIndex() != 0) {
                 pw.println(txt_ip.getText());
             } else {
@@ -136,7 +136,7 @@ public class Conexao extends javax.swing.JFrame {
     }
 
     public void leArquivo() throws IOException {
-        File file = new File("c:/config.txt");
+        File file = new File("C:/NCM-app/src/Ctrl/config.txt");
         FileReader fr = null;
         try {
             fr = new FileReader(file);
@@ -149,6 +149,7 @@ public class Conexao extends javax.swing.JFrame {
         txt_ip.setText(linha);
         if(txt_ip.getText().compareTo("localhost")==0){
             cbx_tipo.setSelectedIndex(0);
+            txt_ip.setText("");
         }else{
             cbx_tipo.setSelectedIndex(1);
         }

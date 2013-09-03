@@ -67,7 +67,7 @@ public class Principal extends javax.swing.JFrame {
     }
 
     public void leArquivo() throws IOException {
-        File file = new File("c:/config.txt");
+        File file = new File("C:/NCM-app/src/Ctrl/config.txt");
         FileReader fr = null;
         try {
             fr = new FileReader(file);
@@ -81,6 +81,7 @@ public class Principal extends javax.swing.JFrame {
         String linha2 = br.readLine();
         diretorio=linha2;
     }
+    
     public void listaProdutos() throws Exception {
         validaEmBranco();
         Statement st;
