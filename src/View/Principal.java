@@ -7,6 +7,11 @@ package View;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,38 +33,54 @@ public class Principal extends javax.swing.JFrame {
     static String listaProdutos;
     static String listaProdutosbyDescricao;
     static String descricao = null;
+    static String diretorio =null;
+    static String ip =null;
 
     public Principal() {
         initComponents();
         cb_embranco.setSelected(true);
         try {
             conecta();
-            listaProdutos();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "erro:" + e.getMessage());
+        } catch (Exception ex) {
+            Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
         }
-        txt_ncm.setVisible(false);
     }
 
     public void conecta() throws Exception {
         try {
-
+            leArquivo();
             Class.forName("org.firebirdsql.jdbc.FBDriver");
             con = DriverManager.getConnection(
-                    "jdbc:firebirdsql://localhost:3050/C:/ResWinCs/BANCO/Resulth.FB",
+                    "jdbc:firebirdsql://"+ip+":3050/"+diretorio,
                     "SYSDBA",
                     "masterkey");
             st = con.createStatement();
-            System.out.println("Conexão bem Sucedida");
+            JOptionPane.showMessageDialog(null, "Conexão Estabelecida!");
         } catch (ClassNotFoundException ex)//caso o driver não seja localizado  
         {
             JOptionPane.showMessageDialog(null, "Driver não encontrado!");
         } catch (SQLException ex)//caso a conexão não possa se realizada  
         {
             JOptionPane.showMessageDialog(null, "Problemas na conexao com a fonte de dados");
+            
         }
     }
 
+    public void leArquivo() throws IOException {
+        File file = new File("c:/config.txt");
+        FileReader fr = null;
+        try {
+            fr = new FileReader(file);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Conexao.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        BufferedReader br = new BufferedReader(fr);
+
+        String linha = br.readLine();
+        ip=linha;
+        String linha2 = br.readLine();
+        diretorio=linha2;
+    }
     public void listaProdutos() throws Exception {
         validaEmBranco();
         Statement st;
@@ -174,7 +195,7 @@ public class Principal extends javax.swing.JFrame {
     public void ctrl_V(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_V) {
             try {
-                tabela1.setValueAt(txt_ncm.getText(), tabela1.getSelectedRow(), 2);
+                tabela1.setValueAt(btn_conexao.getText(), tabela1.getSelectedRow(), 2);
             } catch (Exception ex) {
                 Logger.getLogger(Principal.class
                         .getName()).log(Level.SEVERE, null, ex);
@@ -185,7 +206,7 @@ public class Principal extends javax.swing.JFrame {
     public void ctrl_C(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_C) {
             try {
-                txt_ncm.setText(tabela1.getValueAt(tabela1.getSelectedRow(), 2).toString());
+                btn_conexao.setText(tabela1.getValueAt(tabela1.getSelectedRow(), 2).toString());
             } catch (Exception ex) {
                 Logger.getLogger(Principal.class
                         .getName()).log(Level.SEVERE, null, ex);
@@ -214,8 +235,8 @@ public class Principal extends javax.swing.JFrame {
         txt_descricao = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         cb_embranco = new javax.swing.JCheckBox();
-        txt_ncm = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
+        btn_conexao = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -270,6 +291,12 @@ public class Principal extends javax.swing.JFrame {
 
         jLabel4.setText("Tipo NCM:");
 
+        btn_conexao.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_conexaoActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -284,12 +311,11 @@ public class Principal extends javax.swing.JFrame {
                         .addComponent(jLabel4)
                         .addGap(18, 18, 18)))
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txt_descricao)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(cb_embranco)
-                        .addGap(461, 461, 461)
-                        .addComponent(txt_ncm, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(txt_descricao))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btn_conexao, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -301,11 +327,11 @@ public class Principal extends javax.swing.JFrame {
                     .addComponent(jLabel3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txt_ncm, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(cb_embranco)
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(16, Short.MAX_VALUE))
+                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btn_conexao, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout pnl_fundoLayout = new javax.swing.GroupLayout(pnl_fundo);
@@ -316,7 +342,7 @@ public class Principal extends javax.swing.JFrame {
                 .addGap(11, 11, 11)
                 .addGroup(pnl_fundoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 651, Short.MAX_VALUE))
                 .addContainerGap())
         );
         pnl_fundoLayout.setVerticalGroup(
@@ -364,6 +390,11 @@ public class Principal extends javax.swing.JFrame {
             }
     }//GEN-LAST:event_txt_descricaoKeyReleased
 
+    private void btn_conexaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_conexaoActionPerformed
+        Conexao c= new Conexao();
+        c.setVisible(true);
+    }//GEN-LAST:event_btn_conexaoActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -405,6 +436,7 @@ public class Principal extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btn_conexao;
     private javax.swing.JCheckBox cb_embranco;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -413,6 +445,5 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JPanel pnl_fundo;
     private javax.swing.JTable tabela1;
     private javax.swing.JTextField txt_descricao;
-    private javax.swing.JTextField txt_ncm;
     // End of variables declaration//GEN-END:variables
 }

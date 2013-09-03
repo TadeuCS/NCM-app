@@ -51,7 +51,7 @@
                   <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="1" attributes="0">
                       <Component id="jPanel1" max="32767" attributes="0"/>
-                      <Component id="jScrollPane1" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="651" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -141,13 +141,12 @@
                           </Group>
                       </Group>
                       <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="txt_descricao" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="cb_embranco" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="461" max="-2" attributes="0"/>
-                              <Component id="txt_ncm" min="-2" pref="24" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="btn_conexao" min="-2" pref="25" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="txt_descricao" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -163,13 +162,13 @@
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="txt_ncm" min="-2" pref="20" max="-2" attributes="0"/>
-                          <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                          <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="cb_embranco" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel4" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
                           </Group>
+                          <Component id="btn_conexao" min="-2" pref="23" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="16" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -191,12 +190,15 @@
                 <Property name="text" type="java.lang.String" value="Em Branco"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JTextField" name="txt_ncm">
-            </Component>
             <Component class="javax.swing.JLabel" name="jLabel4">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Tipo NCM:"/>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="btn_conexao">
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btn_conexaoActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>
