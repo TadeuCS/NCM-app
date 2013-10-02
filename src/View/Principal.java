@@ -33,14 +33,16 @@ public class Principal extends javax.swing.JFrame {
     static String listaProdutos;
     static String listaProdutosbyDescricao;
     static String descricao = null;
-    static String diretorio =null;
-    static String ip =null;
+    static String diretorio = null;
+    static String ip = null;
+    static int click = 0;
 
     public Principal() {
         initComponents();
         cb_embranco.setSelected(true);
         try {
             conecta();
+            listaProdutosPis();
             listaProdutosbyDescricao();
         } catch (Exception ex) {
             Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
@@ -52,7 +54,7 @@ public class Principal extends javax.swing.JFrame {
             leArquivo();
             Class.forName("org.firebirdsql.jdbc.FBDriver");
             con = DriverManager.getConnection(
-                    "jdbc:firebirdsql://"+ip+":3050/"+diretorio,
+                    "jdbc:firebirdsql://" + ip + ":3050/" + diretorio,
                     "SYSDBA",
                     "masterkey");
             st = con.createStatement();
@@ -63,7 +65,7 @@ public class Principal extends javax.swing.JFrame {
         } catch (SQLException ex)//caso a conexão não possa se realizada  
         {
             JOptionPane.showMessageDialog(null, "Problemas na conexao com a fonte de dados");
-            
+
         }
     }
 
@@ -78,11 +80,11 @@ public class Principal extends javax.swing.JFrame {
         BufferedReader br = new BufferedReader(fr);
 
         String linha = br.readLine();
-        ip=linha;
+        ip = linha;
         String linha2 = br.readLine();
-        diretorio=linha2;
+        diretorio = linha2;
     }
-    
+
     public void listaProdutos() throws Exception {
         validaEmBranco();
         Statement st;
@@ -90,7 +92,7 @@ public class Principal extends javax.swing.JFrame {
         ResultSet rs = st.executeQuery(listaProdutos);
         DefaultTableModel model = (DefaultTableModel) tabela1.getModel();
         while (rs.next()) {
-            if (cb_embranco.getSelectedObjects()!= null) {
+            if (cb_embranco.getSelectedObjects() != null) {
                 String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO")};
                 model.addRow(linha);
             } else {
@@ -109,10 +111,10 @@ public class Principal extends javax.swing.JFrame {
         ResultSet rs = st.executeQuery(listaProdutosbyDescricao);
         DefaultTableModel model = (DefaultTableModel) tabela1.getModel();
         while (rs.next()) {
-            if (cb_embranco.getSelectedObjects()!=null) {
+            if (cb_embranco.getSelectedObjects() != null) {
                 String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO")};
                 model.addRow(linha);
-            }else{
+            } else {
                 String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO"), rs.getString("CODIGONCM")};
                 model.addRow(linha);
             }
@@ -184,9 +186,14 @@ public class Principal extends javax.swing.JFrame {
     }
 
     public void enter(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+
+        if ((e.getKeyCode() == KeyEvent.VK_ENTER) && (click == 0)) {
+            click++;
+        }
+        if ((e.getKeyCode() == KeyEvent.VK_ENTER) && (click == 1)) {
             try {
                 validaNCM(tabela1.getValueAt(tabela1.getSelectedRow(), 2).toString());
+                click = 0;
             } catch (Exception ex) {
                 Logger.getLogger(Principal.class
                         .getName()).log(Level.SEVERE, null, ex);
@@ -223,6 +230,64 @@ public class Principal extends javax.swing.JFrame {
         } else {
             listaProdutos = "SELECT * FROM PRODUTO AS P INNER JOIN CLASFISC C ON P.CODCLASFIS=C.CODCLASFIS WHERE C.CODCLASFIS <>'' and p.ativo='S' and p.prodbloqueado='N' order by p.descricao";
             listaProdutosbyDescricao = "SELECT * FROM PRODUTO P INNER JOIN CLASFISC AS C ON P.CODCLASFIS=C.CODCLASFIS WHERE P.DESCRICAO LIKE '%" + descricao + "%'  AND C.CODCLASFIS <>'' and p.ativo='S' and p.prodbloqueado='N' order by p.descricao";
+        }
+    }
+
+    public void listaProdutosPis() throws Exception {
+        Statement st;
+        st = con.createStatement();
+        ResultSet rs = st.executeQuery("SELECT * FROM PRODUTO P INNER JOIN PRODUTODETALHE D ON P.CODPROD=D.CODPROD WHERE D.PIS_CST='' ORDER BY D.CODPROD");
+        DefaultTableModel model = (DefaultTableModel) tabela2.getModel();
+        while (rs.next()) {
+            String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO"), rs.getString("PIS_CST")};
+            model.addRow(linha);
+        }
+    }
+
+    public void enterPis(KeyEvent e) {
+        if ((e.getKeyCode() == KeyEvent.VK_ENTER) && (click == 0)) {
+            click++;
+        }
+        if ((e.getKeyCode() == KeyEvent.VK_ENTER) && (click == 1)) {
+            try {
+                validaPis(tabela2.getValueAt(tabela2.getSelectedRow(), 2).toString(), tabela2.getValueAt(tabela2.getSelectedRow(), 0).toString());
+                click = 0;
+            } catch (Exception ex) {
+                Logger.getLogger(Principal.class
+                        .getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    public void validaPis(String pis, String codprod) throws Exception {
+        Statement st;
+        st = con.createStatement();
+        try {
+            if ((pis.compareTo("01") == 0) && (tabela2.getSelectedRow() >= 0)) {
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST = '" + pis + "',COFINS_CST='" + pis + "',"
+                        + "                                 PISENT_CST='50',COFINSENT_CST='50',"
+                        + "                                 ALIQPIS='1.65',ALIQCOFINS='7.60',"
+                        + "                                 ALIQPISENT='1.65',ALIQCOFINSENT='7.60' WHERE CODPROD ='" + codprod + "'");
+                JOptionPane.showMessageDialog(null, "PIS INSERIDO COM SUCESSO!");
+            } else if ((pis.compareTo("04") == 0) && (tabela2.getSelectedRow() >= 0)) {
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST = '" + pis + "',COFINS_CST='" + pis + "',"
+                        + "                                 PISENT_CST='70',COFINSENT_CST='70',"
+                        + "                                 ALIQPIS='0.00',ALIQCOFINS='0.00',"
+                        + "                                 ALIQPISENT='0.00',ALIQCOFINSENT='0.00' WHERE CODPROD ='" + codprod + "'");
+                JOptionPane.showMessageDialog(null, "PIS INSERIDO COM SUCESSO!");
+            } else if ((pis.compareTo("06") == 0) && (tabela2.getSelectedRow() >= 0)) {
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST = '" + pis + "',COFINS_CST='" + pis + "',"
+                        + "                                 PISENT_CST='70',COFINSENT_CST='70',"
+                        + "                                 ALIQPIS='0.00',ALIQCOFINS='0.00',"
+                        + "                                 ALIQPISENT='0.00',ALIQCOFINSENT='0.00' WHERE CODPROD ='" + codprod + "'");
+                JOptionPane.showMessageDialog(null, "PIS INSERIDO COM SUCESSO!");
+            } else {
+                JOptionPane.showMessageDialog(null, "PIS DE SAIDA INVALIDO!");
+                JOptionPane.showMessageDialog(null, "SELECIONE UM PIS E CLICK EM 'ENTER'!");
+            }
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(null, e.getMessage());
         }
     }
 
@@ -287,9 +352,10 @@ public class Principal extends javax.swing.JFrame {
         tabela1.getColumnModel().getColumn(0).setMinWidth(100);
         tabela1.getColumnModel().getColumn(0).setPreferredWidth(100);
         tabela1.getColumnModel().getColumn(0).setMaxWidth(100);
-        tabela1.getColumnModel().getColumn(1).setMinWidth(400);
         tabela1.getColumnModel().getColumn(1).setPreferredWidth(400);
-        tabela1.getColumnModel().getColumn(1).setMaxWidth(400);
+        tabela1.getColumnModel().getColumn(2).setMinWidth(100);
+        tabela1.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tabela1.getColumnModel().getColumn(2).setMaxWidth(100);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -392,12 +458,20 @@ public class Principal extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
+        tabela2.setColumnSelectionAllowed(true);
         tabela2.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 tabela2KeyPressed(evt);
             }
         });
         jScrollPane2.setViewportView(tabela2);
+        tabela2.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tabela2.getColumnModel().getColumn(0).setMinWidth(100);
+        tabela2.getColumnModel().getColumn(0).setPreferredWidth(100);
+        tabela2.getColumnModel().getColumn(0).setMaxWidth(100);
+        tabela2.getColumnModel().getColumn(2).setMinWidth(100);
+        tabela2.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tabela2.getColumnModel().getColumn(2).setMaxWidth(100);
 
         pnl_dados.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -436,7 +510,7 @@ public class Principal extends javax.swing.JFrame {
                     .addComponent(chx_aliq_saida)
                     .addComponent(chx_itens_null)
                     .addComponent(chx_aliq_entrada))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(196, Short.MAX_VALUE))
         );
         pnl_opcoesLayout.setVerticalGroup(
             pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -479,7 +553,7 @@ public class Principal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(pnl_dadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(pnl_opcoes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btn_executar)
                 .addGap(5, 5, 5))
@@ -501,7 +575,7 @@ public class Principal extends javax.swing.JFrame {
             .addGroup(pnl_pis_cofinsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(pnl_dados, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(20, 20, 20)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 205, Short.MAX_VALUE)
                 .addContainerGap())
         );
@@ -534,22 +608,22 @@ public class Principal extends javax.swing.JFrame {
 
     private void txt_descricaoKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_descricaoKeyReleased
         try {
-                descricao = txt_descricao.getText().toUpperCase();
-                descricao = descricao.replace(" ", "%");
-                listaProdutosbyDescricao();
-            } catch (Exception ex) {
-                Logger.getLogger(Principal.class
-                        .getName()).log(Level.SEVERE, null, ex);
-            }
+            descricao = txt_descricao.getText().toUpperCase();
+            descricao = descricao.replace(" ", "%");
+            listaProdutosbyDescricao();
+        } catch (Exception ex) {
+            Logger.getLogger(Principal.class
+                    .getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_txt_descricaoKeyReleased
 
     private void btn_conexaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_conexaoActionPerformed
-        Conexao c= new Conexao();
+        Conexao c = new Conexao();
         c.setVisible(true);
     }//GEN-LAST:event_btn_conexaoActionPerformed
 
     private void tabela2KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tabela2KeyPressed
-        enter(evt);
+        enterPis(evt);
     }//GEN-LAST:event_tabela2KeyPressed
 
     /**
