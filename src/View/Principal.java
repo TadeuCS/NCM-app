@@ -333,18 +333,23 @@ public class Principal extends javax.swing.JFrame {
     public void corrigePisEntrada() throws Exception{
         
     }
+    
     public void corrigePisSaida() throws Exception{
         
     }
+    
     public void corrigeAliqEntrada() throws Exception{
         
     }
+    
     public void corrigeAliqSaida() throws Exception{
         
     }
+    
     public void corrigeItensNulos() throws Exception{
         
     }
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
