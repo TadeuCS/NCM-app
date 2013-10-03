@@ -62,7 +62,7 @@
                       <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="1" attributes="0">
                           <Component id="jPanel1" max="32767" attributes="0"/>
-                          <Component id="jScrollPane1" pref="669" max="32767" attributes="0"/>
+                          <Component id="jScrollPane1" pref="763" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -238,7 +238,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="pnl_dados" alignment="0" max="32767" attributes="0"/>
-                          <Component id="jScrollPane2" alignment="0" pref="669" max="32767" attributes="0"/>
+                          <Component id="jScrollPane2" alignment="0" pref="763" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -250,7 +250,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="pnl_dados" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
-                      <Component id="jScrollPane2" pref="205" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="199" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -387,33 +387,52 @@
                               </Group>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="chx_aliq_saida" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="chx_itens_null" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="chx_aliq_entrada" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="chx_aliq_saida" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="chx_aliq_entrada" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace min="0" pref="280" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="chx_itens_null" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="32767" attributes="0"/>
+                                      <Component id="cbx_mes" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="32" max="-2" attributes="0"/>
+                                      <Component id="cbx_ano" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                               </Group>
-                              <EmptySpace pref="196" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
+                          <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="chx_estrutura" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="chx_itens_null" alignment="3" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="chx_pis_entrada" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="chx_aliq_entrada" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="cbx_ano" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="3" attributes="0">
+                                              <Component id="chx_estrutura" alignment="3" min="-2" max="-2" attributes="0"/>
+                                              <Component id="chx_itens_null" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="chx_pis_entrada" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="chx_aliq_entrada" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                  </Group>
+                                  <Component id="cbx_mes" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="chx_pis_saida" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="chx_aliq_saida" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace pref="9" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -428,6 +447,9 @@
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Pis/Cofins Entrada"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chx_pis_entradaActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JCheckBox" name="chx_pis_saida">
                       <Properties>
@@ -449,12 +471,19 @@
                         <Property name="text" type="java.lang.String" value="Itens Null"/>
                       </Properties>
                     </Component>
+                    <Component class="com.toedter.calendar.JMonthChooser" name="cbx_mes">
+                    </Component>
+                    <Component class="com.toedter.calendar.JYearChooser" name="cbx_ano">
+                    </Component>
                   </SubComponents>
                 </Container>
                 <Component class="javax.swing.JButton" name="btn_executar">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Executar"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btn_executarActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>

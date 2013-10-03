@@ -13,6 +13,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -58,7 +60,6 @@ public class Principal extends javax.swing.JFrame {
                     "SYSDBA",
                     "masterkey");
             st = con.createStatement();
-            JOptionPane.showMessageDialog(null, "Conexão Estabelecida!");
         } catch (ClassNotFoundException ex)//caso o driver não seja localizado  
         {
             JOptionPane.showMessageDialog(null, "Driver não encontrado!");
@@ -291,6 +292,59 @@ public class Principal extends javax.swing.JFrame {
         }
     }
 
+    public void corrigeEstrutura() throws Exception {
+
+        int mes = cbx_mes.getMonth() + 1;
+        int ano = cbx_ano.getYear();
+        if (chx_estrutura.getSelectedObjects() != null) {
+            txt_areaProcesso.setText(txt_areaProcesso.getText() + "Corrigindo estrutura...\n");
+            try {
+                Statement st;
+                st = con.createStatement();
+                ResultSet rs = st.executeQuery("select * from pedidoc inner join pedidoi on "
+                        + "pedidoc.codempresa = pedidoi.codempresa and pedidoc.tipopedido ="
+                        + " pedidoi.tipopedido and pedidoc.codcliente = pedidoi.codcliente and"
+                        + " pedidoc.codpedido = pedidoi.codpedido inner join produto on pedidoi.codprod"
+                        + " = produto.codprod left join produtodetalhe on pedidoi.codprod = produtodetalhe.codprod"
+                        + " where extract(month from datapedido) = " + mes + " and extract(year from datapedido)"
+                        + " = " + ano + " and (pedidoc.tipopedido = '56' or pedidoc.tipopedido = '51')");
+                int contador = 0;
+                while (rs.next()) {
+                    try {
+                        PreparedStatement ps = con.prepareStatement("INSERT INTO PRODUTODETALHE (CODPROD) VALUES ('" + rs.getString("CODPROD") + "') ");
+                        ps.executeUpdate();
+                        ps.close();
+                        contador++;
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(null, e.getMessage());
+                    }
+                }
+
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "Quantidade de Alterações: " + contador + "\n");
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "Estrutura corrigida!\n");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "Erro...");
+            }
+
+        }
+    }
+
+    public void corrigePisEntrada() throws Exception{
+        
+    }
+    public void corrigePisSaida() throws Exception{
+        
+    }
+    public void corrigeAliqEntrada() throws Exception{
+        
+    }
+    public void corrigeAliqSaida() throws Exception{
+        
+    }
+    public void corrigeItensNulos() throws Exception{
+        
+    }
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -318,6 +372,8 @@ public class Principal extends javax.swing.JFrame {
         chx_aliq_entrada = new javax.swing.JCheckBox();
         chx_aliq_saida = new javax.swing.JCheckBox();
         chx_itens_null = new javax.swing.JCheckBox();
+        cbx_mes = new com.toedter.calendar.JMonthChooser();
+        cbx_ano = new com.toedter.calendar.JYearChooser();
         btn_executar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -425,7 +481,7 @@ public class Principal extends javax.swing.JFrame {
                 .addGap(10, 10, 10)
                 .addGroup(pnl_fundoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 669, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 763, Short.MAX_VALUE))
                 .addContainerGap())
         );
         pnl_fundoLayout.setVerticalGroup(
@@ -486,6 +542,11 @@ public class Principal extends javax.swing.JFrame {
         chx_estrutura.setText("Estrutura");
 
         chx_pis_entrada.setText("Pis/Cofins Entrada");
+        chx_pis_entrada.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chx_pis_entradaActionPerformed(evt);
+            }
+        });
 
         chx_pis_saida.setText("Pis/Cofins Saida");
 
@@ -507,30 +568,48 @@ public class Principal extends javax.swing.JFrame {
                     .addComponent(chx_estrutura))
                 .addGap(18, 18, 18)
                 .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(chx_aliq_saida)
-                    .addComponent(chx_itens_null)
-                    .addComponent(chx_aliq_entrada))
-                .addContainerGap(196, Short.MAX_VALUE))
+                    .addGroup(pnl_opcoesLayout.createSequentialGroup()
+                        .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(chx_aliq_saida)
+                            .addComponent(chx_aliq_entrada))
+                        .addGap(0, 280, Short.MAX_VALUE))
+                    .addGroup(pnl_opcoesLayout.createSequentialGroup()
+                        .addComponent(chx_itens_null)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cbx_mes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(32, 32, 32)
+                        .addComponent(cbx_ano, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
         );
         pnl_opcoesLayout.setVerticalGroup(
             pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnl_opcoesLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chx_estrutura)
-                    .addComponent(chx_itens_null))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chx_pis_entrada)
-                    .addComponent(chx_aliq_entrada))
+                .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnl_opcoesLayout.createSequentialGroup()
+                        .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cbx_ano, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(chx_estrutura)
+                                .addComponent(chx_itens_null)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(chx_pis_entrada)
+                            .addComponent(chx_aliq_entrada)))
+                    .addComponent(cbx_mes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chx_pis_saida)
                     .addComponent(chx_aliq_saida))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(9, Short.MAX_VALUE))
         );
 
         btn_executar.setText("Executar");
+        btn_executar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_executarActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout pnl_dadosLayout = new javax.swing.GroupLayout(pnl_dados);
         pnl_dados.setLayout(pnl_dadosLayout);
@@ -567,7 +646,7 @@ public class Principal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(pnl_pis_cofinsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnl_dados, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 669, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 763, Short.MAX_VALUE))
                 .addContainerGap())
         );
         pnl_pis_cofinsLayout.setVerticalGroup(
@@ -576,7 +655,7 @@ public class Principal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(pnl_dados, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 205, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -626,6 +705,18 @@ public class Principal extends javax.swing.JFrame {
         enterPis(evt);
     }//GEN-LAST:event_tabela2KeyPressed
 
+    private void btn_executarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_executarActionPerformed
+        try {
+            corrigeEstrutura();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, ex.getMessage());
+        }
+    }//GEN-LAST:event_btn_executarActionPerformed
+
+    private void chx_pis_entradaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chx_pis_entradaActionPerformed
+        
+    }//GEN-LAST:event_chx_pis_entradaActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -670,6 +761,8 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JButton btn_conexao;
     private javax.swing.JButton btn_executar;
     private javax.swing.JCheckBox cb_embranco;
+    private com.toedter.calendar.JYearChooser cbx_ano;
+    private com.toedter.calendar.JMonthChooser cbx_mes;
     private javax.swing.JCheckBox chx_aliq_entrada;
     private javax.swing.JCheckBox chx_aliq_saida;
     private javax.swing.JCheckBox chx_estrutura;
