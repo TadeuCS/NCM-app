@@ -11,7 +11,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -38,19 +40,28 @@ public class Principal extends javax.swing.JFrame {
     static String diretorio = null;
     static String ip = null;
     static int click = 0;
+    PrintWriter pw;
 
     public Principal() {
         initComponents();
-        cb_embranco.setSelected(true);
+        marcaOpcoes();
         try {
             conecta();
             listaProdutosPis();
-            listaProdutosbyDescricao();
+            listaProdutos();
         } catch (Exception ex) {
-            Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(null, ex.getMessage());
         }
-    }
 
+    }
+    public void marcaOpcoes(){
+       cb_embranco.setSelected(true);
+       chx_aliq_entrada.setSelected(true);
+       chx_estrutura.setSelected(true);
+       chx_itens_null.setSelected(true);
+       chx_pis_entrada.setSelected(true);
+       chx_pis_saida.setSelected(true);
+    }
     public void conecta() throws Exception {
         try {
             leArquivo();
@@ -66,7 +77,6 @@ public class Principal extends javax.swing.JFrame {
         } catch (SQLException ex)//caso a conexão não possa se realizada  
         {
             JOptionPane.showMessageDialog(null, "Problemas na conexao com a fonte de dados");
-
         }
     }
 
@@ -126,6 +136,20 @@ public class Principal extends javax.swing.JFrame {
     public void limpaTabela1() {
         try {
             DefaultTableModel tblRemove = (DefaultTableModel) tabela1.getModel();
+            while (tblRemove.getRowCount() > 0) {
+                for (int i = 1; i <= tblRemove.getRowCount(); i++) {
+                    tblRemove.removeRow(0);
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
+
+    }
+
+    public void limpaTabela2() {
+        try {
+            DefaultTableModel tblRemove = (DefaultTableModel) tabela2.getModel();
             while (tblRemove.getRowCount() > 0) {
                 for (int i = 1; i <= tblRemove.getRowCount(); i++) {
                     tblRemove.removeRow(0);
@@ -226,7 +250,7 @@ public class Principal extends javax.swing.JFrame {
 
     public void validaEmBranco() throws Exception {
         if (cb_embranco.getSelectedObjects() != null) {
-            listaProdutos = "SELECT * FROM PRODUTO WHERE CODCLASFIS ='' where ativo='S' and prodbloqueado='N' order by descricao";
+            listaProdutos = "SELECT * FROM PRODUTO WHERE CODCLASFIS ='' and ativo='S' and prodbloqueado='N' order by descricao";
             listaProdutosbyDescricao = "SELECT * FROM PRODUTO WHERE DESCRICAO LIKE '%" + descricao + "%' AND CODCLASFIS ='' and ativo='S' and prodbloqueado='N' order by descricao";
         } else {
             listaProdutos = "SELECT * FROM PRODUTO AS P INNER JOIN CLASFISC C ON P.CODCLASFIS=C.CODCLASFIS WHERE C.CODCLASFIS <>'' and p.ativo='S' and p.prodbloqueado='N' order by p.descricao";
@@ -293,35 +317,28 @@ public class Principal extends javax.swing.JFrame {
     }
 
     public void corrigeEstrutura() throws Exception {
-
-        int mes = cbx_mes.getMonth() + 1;
-        int ano = cbx_ano.getYear();
+        Statement st;
+        pw = new PrintWriter(new FileWriter("C:/NCM-app/src/Ctrl/Estrutura.txt", false));
         if (chx_estrutura.getSelectedObjects() != null) {
-            txt_areaProcesso.setText(txt_areaProcesso.getText() + "Corrigindo estrutura...\n");
             try {
-                Statement st;
                 st = con.createStatement();
-                ResultSet rs = st.executeQuery("select * from pedidoc inner join pedidoi on "
-                        + "pedidoc.codempresa = pedidoi.codempresa and pedidoc.tipopedido ="
-                        + " pedidoi.tipopedido and pedidoc.codcliente = pedidoi.codcliente and"
-                        + " pedidoc.codpedido = pedidoi.codpedido inner join produto on pedidoi.codprod"
-                        + " = produto.codprod left join produtodetalhe on pedidoi.codprod = produtodetalhe.codprod"
-                        + " where extract(month from datapedido) = " + mes + " and extract(year from datapedido)"
-                        + " = " + ano + " and (pedidoc.tipopedido = '56' or pedidoc.tipopedido = '51')");
+                ResultSet rs = st.executeQuery("Select * From produto\n"
+                        + " Where produto.codprod Not In (Select produtodetalhe.codprod From produtodetalhe\n"
+                        + "                                Where produtodetalhe.codprod = produto.codprod)");
                 int contador = 0;
+                txt_areaProcesso.setText("Gerando Correção...");
                 while (rs.next()) {
                     try {
-                        PreparedStatement ps = con.prepareStatement("INSERT INTO PRODUTODETALHE (CODPROD) VALUES ('" + rs.getString("CODPROD") + "') ");
-                        ps.executeUpdate();
-                        ps.close();
+                        pw.println("INSERT INTO PRODUTODETALHE (CODPROD) VALUES ('" + rs.getString("CODPROD") + "');");
                         contador++;
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(null, e.getMessage());
                     }
                 }
-
-                txt_areaProcesso.setText(txt_areaProcesso.getText() + "Quantidade de Alterações: " + contador + "\n");
-                txt_areaProcesso.setText(txt_areaProcesso.getText() + "Estrutura corrigida!\n");
+                pw.close();
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n Linhas geradas: " + contador);
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n Correção gerada!");
+                JOptionPane.showMessageDialog(null, "Arquivo Gerado com Sucesso!\n" + "Caminho: C:/NCM-app/src/Ctrl/Estrutura.txt");
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, e.getMessage());
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "Erro...");
@@ -330,26 +347,248 @@ public class Principal extends javax.swing.JFrame {
         }
     }
 
-    public void corrigePisEntrada() throws Exception{
-        
+    public void corrigePisEntrada() throws Exception {
+        if (chx_pis_entrada.getSelectedObjects() != null) {
+            String quantidade = null;
+            PreparedStatement ps;
+            Statement st;
+            try {
+
+                st = con.createStatement();
+                ResultSet rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PISENT_CST <>"
+                        + " COFINSENT_CST OR (PIS_CST='01' AND PISENT_CST<>'50')\n"
+                        + "                        OR (PIS_CST='04' AND PISENT_CST<>'70')\n"
+                        + "                        OR (PIS_CST='06' AND PISENT_CST<>'73')");
+                if (rs.next()) {
+                    quantidade = rs.getString("qtde");
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+            }
+            txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nRealizando Correções... ");
+            try {
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PISENT_CST='50' WHERE PIS_CST='01';");
+                ps.executeUpdate();
+                ps.close();
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PISENT_CST='70' WHERE PIS_CST='04';");
+                ps.executeUpdate();
+                ps.close();
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PISENT_CST='73' WHERE PIS_CST='06';");
+                ps.executeUpdate();
+                ps.close();
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET COFINSENT_CST=PISENT_CST;");
+                ps.executeUpdate();
+                ps.close();
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorreções Feitas: " + quantidade);
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nFim da Correção!");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+            }
+        }
     }
-    
-    public void corrigePisSaida() throws Exception{
-        
+
+    public void corrigePisSaida() throws Exception {
+        if (chx_pis_saida.getSelectedObjects() != null) {
+            String quantidade = null;
+            PreparedStatement ps;
+            Statement st;
+            try {
+
+                st = con.createStatement();
+                ResultSet rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PIS_CST <> COFINS_CST\n"
+                        + "                         OR (PISENT_CST='50' AND PIS_CST<>'01')\n"
+                        + "                         OR (PISENT_CST='70' AND PIS_CST<>'04')\n"
+                        + "                         OR (PISENT_CST='73' AND PIS_CST<>'06')");
+                if (rs.next()) {
+                    quantidade = rs.getString("qtde");
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+            }
+            txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nRealizando Correções... ");
+            try {
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PIS_CST='01' WHERE PISENT_CST='50';");
+                ps.executeUpdate();
+                ps.close();
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PIS_CST='04' WHERE PISENT_CST='70';");
+                ps.executeUpdate();
+                ps.close();
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PIS_CST='06' WHERE PISENT_CST='73';");
+                ps.executeUpdate();
+                ps.close();
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET COFINS_CST=PIS_CST;");
+                ps.executeUpdate();
+                ps.close();
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorreções Feitas: " + quantidade);
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nFim da Correção!");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+            }
+        }
     }
-    
-    public void corrigeAliqEntrada() throws Exception{
-        
+
+    public void corrigeAliquotas() throws Exception {
+        if (chx_aliq_entrada.getSelectedObjects() != null) {
+            String quantidade = null;
+            PreparedStatement ps;
+            Statement st;
+            try {
+
+                st = con.createStatement();
+                ResultSet rs = st.executeQuery("select COUNT(*) as qtde from produtodetalhe where (ALIQPIS<>ALIQPISENT or ALIQCOFINS<>ALIQCOFINSENT) or"
+                        + "(PIS_CST='01' AND (ALIQPIS<>'1.65' OR ALIQPISENT<>'1.65')) OR"
+                        + "(PIS_CST='04' AND (ALIQPIS<>'0.00' OR ALIQPISENT<>'0.00')) OR"
+                        + "(PIS_CST='06' AND (ALIQPIS<>'0.00' OR ALIQPISENT<>'0.00'))");
+                if (rs.next()) {
+                    quantidade = rs.getString("qtde");
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+            }
+            txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nRealizando Correções... ");
+            try {
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET ALIQPIS='1.65',ALIQCOFINS='7.60',ALIQPISENT='1.65',ALIQCOFINSENT='7.60' WHERE PIS_CST='01';");
+                ps.executeUpdate();
+                ps.close();
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE PIS_CST='04';\n");
+                ps.executeUpdate();
+                ps.close();
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE PIS_CST='06';\n");
+                ps.executeUpdate();
+                ps.close();
+                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET ALIQPIS=ALIQPISENT,ALIQCOFINS=ALIQCOFINSENT;");
+                ps.executeUpdate();
+                ps.close();
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorreções Feitas: " + quantidade);
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nFim da Correção!");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+            }
+        }
     }
-    
-    public void corrigeAliqSaida() throws Exception{
-        
+
+    public void corrigeItensNulos() throws Exception {
+        if (chx_itens_null.getSelectedObjects() != null) {
+            String quantidade = null;
+            try {
+                Statement st;
+                st = con.createStatement();
+                ResultSet rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PIS_CST IS NULL");
+                if (rs.next()) {
+                    quantidade = rs.getString("qtde");
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+            }
+            txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nRealizando Correções... ");
+            try {
+                PreparedStatement ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PIS_CST='',COFINS_CST='',"
+                        + "PISENT_CST='',COFINSENT_CST='',ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE "
+                        + "PIS_CST IS NULL");
+                ps.executeUpdate();
+                ps.close();
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorreções Feitas: " + quantidade);
+                txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nFim da Correção!");
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e.getMessage());
+            }
+        }
     }
-    
-    public void corrigeItensNulos() throws Exception{
-        
+
+    public void apurar() throws Exception {
+        PreparedStatement ps;
+        int mes = cbx_mes.getMonth() + 1;
+        int ano = cbx_ano.getYear();
+        try {
+            ps = con.prepareStatement("Update NfEntri Set CstPis = (Select PisEnt_Cst From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfEntri.Codprod),\n"
+                    + "                   AliqPis = (Select AliqPisEnt From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfEntri.Codprod),\n"
+                    + "                   VlrPis = (((Select AliqPisEnt From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfEntri.Codprod) /100) *\n"
+                    + "                                  ((NfEntri.Preconf * Nfentri.Quantidade) - NfEntri.Descvlr -\n"
+                    + "                                                                        (Select (((N.quantidade)*(N.preconf))/(NfEntrc.descvlrnf+Nfentrc.totalnf))*(NfEntrc.descvlrnf)\n"
+                    + "                                                                           From NfEntrc\n"
+                    + "                                                                         Inner Join nfentri N on N.codempresa = nfentrc.codempresa And\n"
+                    + "                                                                                                 N.numeronf   = nfentrc.numeronf   And\n"
+                    + "                                                                                                 N.codfornec  = nfentrc.codfornec  And\n"
+                    + "                                                                                                 N.codempresa = nfentri.codempresa And\n"
+                    + "                                                                                                 N.numeronf   = nfentri.numeronf   And\n"
+                    + "                                                                                                 N.codfornec  = nfentri.codfornec  And\n"
+                    + "                                                                                                 N.CodProd    = NfEntri.CodProd))+\n"
+                    + "                                                                        (((Select AliqPisEnt From Produtodetalhe\n"
+                    + "                                                                            Where ProdutoDetalhe.Codprod = NfEntri.Codprod) /100) *\n"
+                    + "                                                                        (Select NfEntrc.totalipi\n"
+                    + "                                                                           From NfEntrc\n"
+                    + "                                                                          Where NfEntrc.Codempresa = NfEntri.Codempresa\n"
+                    + "                                                                            And Nfentrc.Codfornec = NFEntri.Codfornec\n"
+                    + "                                                                            And NfEntrc.NumeroNf = NfEntri.NumeroNF))     ),\n"
+                    + "                   CstCofins = (Select CofinsEnt_Cst From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfEntri.Codprod),\n"
+                    + "                   AliqCofins = (Select AliqCofinsEnt From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfEntri.Codprod),\n"
+                    + "                   VlrCofins = (((Select AliqCofinsEnt From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfEntri.Codprod) /100) *\n"
+                    + "                                  ((NfEntri.Preconf * Nfentri.Quantidade) - NfEntri.Descvlr -  (Select (((Nfentri.quantidade)*(nfentri.preconf))/(NfEntrc.descvlrnf+Nfentrc.totalnf))*(NfEntrc.descvlrnf)\n"
+                    + "                                                                                                  From NfEntrc\n"
+                    + "                                                                                            Inner Join nfentri N on N.codempresa = nfentrc.codempresa And\n"
+                    + "                                                                                                                    N.numeronf   = nfentrc.numeronf   And\n"
+                    + "                                                                                                                    N.codfornec  = nfentrc.codfornec  And\n"
+                    + "                                                                                                                    N.codempresa = nfentri.codempresa And\n"
+                    + "                                                                                                                    N.numeronf   = nfentri.numeronf   And\n"
+                    + "                                                                                                                    N.codfornec  = nfentri.codfornec  And\n"
+                    + "                                                                                                                    N.CodProd    = NfEntri.CodProd))+\n"
+                    + "                                                                                                    (((Select AliqCofins From Produtodetalhe\n"
+                    + "                                                                                                        Where ProdutoDetalhe.Codprod = NfEntri.Codprod) /100) *\n"
+                    + "                                                                                                      (Select NfEntrc.totalipi\n"
+                    + "                                                                                                         From NfEntrc\n"
+                    + "                                                                                                        Where NfEntrc.Codempresa = NfEntri.Codempresa\n"
+                    + "                                                                                                          And Nfentrc.Codfornec = NFEntri.Codfornec\n"
+                    + "                                                                                                          And NfEntrc.NumeroNf = NfEntri.NumeroNF))\n"
+                    + "                                                                                                    )\n"
+                    + "Where NfEntri.Numeronf In (Select NumeroNf From NfEntrc\n"
+                    + "                           Where NfEntrc.Codempresa = NfEntri.Codempresa \n"
+                    + "                             And Nfentrc.Codfornec = NFEntri.Codfornec \n"
+                    + "                             And extract(month from nfentrc.dt_entrada)=" + mes + " and extract(year from nfentrc.dt_entrada)=" + ano + ");");
+            ps.executeUpdate();
+            ps.close();
+
+            ps = con.prepareStatement("Update NfEntrc Set VlrPis = (Select Sum(vlrPis) From NfEntri\n"
+                    + "                             Where NfEntri.CodEmpresa = NfEntrc.CodEmpresa\n"
+                    + "                               And NfEntri.Numeronf = NfEntrc.Numeronf \n"
+                    + "                               And NfEntri.Codfornec = NfEntrc.Codfornec),\n"
+                    + "                   VlrCofins = (Select Sum(vlrCofins) From NfEntri\n"
+                    + "                             Where NfEntri.CodEmpresa = NfEntrc.CodEmpresa\n"
+                    + "                               And NfEntri.Numeronf = NfEntrc.Numeronf \n"
+                    + "                               And NfEntri.Codfornec = NfEntrc.Codfornec)\n"
+                    + "where extract(month from NfEntrc.Dt_Entrada)=" + mes + " and extract(year from NfEntrc.Dt_Entrada)=" + ano + ";");
+            ps.executeUpdate();
+            ps.close();
+
+            ps = con.prepareStatement("Update NfSaidi Set CstPis = (Select Pis_Cst From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfSaidi.Codprod),\n"
+                    + "                   AliqPis = (Select AliqPis From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfSaidi.Codprod),\n"
+                    + "                   VlrPis = (((Select AliqPis From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfSaidi.Codprod) /100) * NfSaidi.Totalrateado),\n"
+                    + "                   CstCofins = (Select Cofins_Cst From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfSaidi.Codprod),\n"
+                    + "                   AliqCofins = (Select AliqCofins From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfSaidi.Codprod),\n"
+                    + "                   VlrCofins = (((Select AliqCofins From Produtodetalhe\n"
+                    + "                             Where ProdutoDetalhe.Codprod = NfSaidi.Codprod) /100) * NfSaidi.Totalrateado)\n"
+                    + "Where NfSaidi.Numnf In (Select NumNf From NfSaidc\n"
+                    + "                           Where NfSaidc.Codempresa = NfSaidi.Codempresa\n"
+                    + "                             And NfSaidc.Serie = NFSaidi.Serie\n"
+                    + "                             And extract(month from NfSaidc.Dt_Emissao)=" + mes + " and extract(year from NfSaidc.Dt_Emissao)=" + ano + ");");
+            ps.executeUpdate();
+            ps.close();
+            txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorrigido Movimentos do mês: " + mes);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
     }
-    
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -375,11 +614,12 @@ public class Principal extends javax.swing.JFrame {
         chx_pis_entrada = new javax.swing.JCheckBox();
         chx_pis_saida = new javax.swing.JCheckBox();
         chx_aliq_entrada = new javax.swing.JCheckBox();
-        chx_aliq_saida = new javax.swing.JCheckBox();
         chx_itens_null = new javax.swing.JCheckBox();
         cbx_mes = new com.toedter.calendar.JMonthChooser();
         cbx_ano = new com.toedter.calendar.JYearChooser();
         btn_executar = new javax.swing.JButton();
+        btn_apurar = new javax.swing.JButton();
+        btn_atualizar = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -435,6 +675,7 @@ public class Principal extends javax.swing.JFrame {
 
         jLabel4.setText("Tipo NCM:");
 
+        btn_conexao.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/conexão.gif"))); // NOI18N
         btn_conexao.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btn_conexaoActionPerformed(evt);
@@ -536,6 +777,7 @@ public class Principal extends javax.swing.JFrame {
 
         pnl_dados.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
+        txt_areaProcesso.setEditable(false);
         txt_areaProcesso.setColumns(20);
         txt_areaProcesso.setRows(5);
         txt_areaProcesso.setTabSize(22);
@@ -555,9 +797,12 @@ public class Principal extends javax.swing.JFrame {
 
         chx_pis_saida.setText("Pis/Cofins Saida");
 
-        chx_aliq_entrada.setText("Aliquotas Entrada");
-
-        chx_aliq_saida.setText("Aliquotas Saida");
+        chx_aliq_entrada.setText("Aliquotas");
+        chx_aliq_entrada.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chx_aliq_entradaActionPerformed(evt);
+            }
+        });
 
         chx_itens_null.setText("Itens Null");
 
@@ -574,39 +819,37 @@ public class Principal extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnl_opcoesLayout.createSequentialGroup()
-                        .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(chx_aliq_saida)
-                            .addComponent(chx_aliq_entrada))
-                        .addGap(0, 280, Short.MAX_VALUE))
+                        .addComponent(chx_aliq_entrada)
+                        .addGap(0, 322, Short.MAX_VALUE))
+                    .addGroup(pnl_opcoesLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cbx_ano, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(pnl_opcoesLayout.createSequentialGroup()
                         .addComponent(chx_itens_null)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cbx_mes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(32, 32, 32)
-                        .addComponent(cbx_ano, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(cbx_mes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         pnl_opcoesLayout.setVerticalGroup(
             pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnl_opcoesLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addGroup(pnl_opcoesLayout.createSequentialGroup()
-                        .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cbx_ano, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(chx_estrutura)
-                                .addComponent(chx_itens_null)))
+                        .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(chx_estrutura)
+                            .addComponent(chx_itens_null))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(chx_pis_entrada)
-                            .addComponent(chx_aliq_entrada)))
-                    .addComponent(cbx_mes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnl_opcoesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chx_pis_saida)
-                    .addComponent(chx_aliq_saida))
-                .addContainerGap(9, Short.MAX_VALUE))
+                            .addComponent(chx_aliq_entrada))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chx_pis_saida))
+                    .addGroup(pnl_opcoesLayout.createSequentialGroup()
+                        .addComponent(cbx_mes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cbx_ano, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         btn_executar.setText("Executar");
@@ -616,30 +859,55 @@ public class Principal extends javax.swing.JFrame {
             }
         });
 
+        btn_apurar.setText("Apurar");
+        btn_apurar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_apurarActionPerformed(evt);
+            }
+        });
+
+        btn_atualizar.setText("Atualizar");
+        btn_atualizar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_atualizarActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnl_dadosLayout = new javax.swing.GroupLayout(pnl_dados);
         pnl_dados.setLayout(pnl_dadosLayout);
         pnl_dadosLayout.setHorizontalGroup(
             pnl_dadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnl_dadosLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(pnl_opcoes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnl_dadosLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btn_executar)
-                .addContainerGap())
+                .addGroup(pnl_dadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnl_dadosLayout.createSequentialGroup()
+                        .addComponent(pnl_opcoes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(10, 10, 10))
+                    .addGroup(pnl_dadosLayout.createSequentialGroup()
+                        .addComponent(btn_atualizar)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGroup(pnl_dadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnl_dadosLayout.createSequentialGroup()
+                        .addComponent(btn_apurar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(103, 103, 103))
+                    .addGroup(pnl_dadosLayout.createSequentialGroup()
+                        .addGroup(pnl_dadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(btn_executar, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap())))
         );
         pnl_dadosLayout.setVerticalGroup(
             pnl_dadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnl_dadosLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnl_dadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(pnl_opcoes, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnl_opcoes, javax.swing.GroupLayout.PREFERRED_SIZE, 93, Short.MAX_VALUE)
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btn_executar)
+                .addGroup(pnl_dadosLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btn_executar)
+                    .addComponent(btn_apurar)
+                    .addComponent(btn_atualizar))
                 .addGap(5, 5, 5))
         );
 
@@ -660,7 +928,7 @@ public class Principal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(pnl_dados, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 201, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -712,15 +980,41 @@ public class Principal extends javax.swing.JFrame {
 
     private void btn_executarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_executarActionPerformed
         try {
+            txt_areaProcesso.setText("");
             corrigeEstrutura();
+            corrigeItensNulos();
+            corrigePisEntrada();
+            corrigePisSaida();
+            corrigeAliquotas();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         }
     }//GEN-LAST:event_btn_executarActionPerformed
 
     private void chx_pis_entradaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chx_pis_entradaActionPerformed
-        
     }//GEN-LAST:event_chx_pis_entradaActionPerformed
+
+    private void chx_aliq_entradaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chx_aliq_entradaActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_chx_aliq_entradaActionPerformed
+
+    private void btn_apurarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_apurarActionPerformed
+        try {
+            txt_areaProcesso.setText("");
+            apurar();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
+    }//GEN-LAST:event_btn_apurarActionPerformed
+
+    private void btn_atualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_atualizarActionPerformed
+        try {
+            limpaTabela2();
+            listaProdutosPis();
+        } catch (Exception ex) {
+            Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btn_atualizarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -763,13 +1057,14 @@ public class Principal extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btn_apurar;
+    private javax.swing.JButton btn_atualizar;
     private javax.swing.JButton btn_conexao;
     private javax.swing.JButton btn_executar;
     private javax.swing.JCheckBox cb_embranco;
     private com.toedter.calendar.JYearChooser cbx_ano;
     private com.toedter.calendar.JMonthChooser cbx_mes;
     private javax.swing.JCheckBox chx_aliq_entrada;
-    private javax.swing.JCheckBox chx_aliq_saida;
     private javax.swing.JCheckBox chx_estrutura;
     private javax.swing.JCheckBox chx_itens_null;
     private javax.swing.JCheckBox chx_pis_entrada;
