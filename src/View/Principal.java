@@ -41,6 +41,7 @@ public class Principal extends javax.swing.JFrame {
         initComponents();
         marcaOpcoes();
         try {
+            
             conecta();
             listaProdutosPis();
             listaProdutos();
