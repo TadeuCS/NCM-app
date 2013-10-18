@@ -1,2 +1,2 @@
 localhost
-C:/ResWinCs/BANCO/R2superResulth.FB
+C:/ResWinCs/RESULTH.FB

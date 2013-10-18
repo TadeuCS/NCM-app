@@ -4,8 +4,6 @@
  */
 package View;
 
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,12 +13,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.table.*;
 
 /**
@@ -54,6 +49,25 @@ public class Principal extends javax.swing.JFrame {
         }
 
     }
+    
+    public void enabledsOn() throws Exception{
+        fundo.setEnabled(false);
+        pnl_fundo.setEnabled(false);
+        txt_descricao.setEnabled(false);
+        cb_embranco.setEnabled(false);
+        btn_conexao.setEnabled(false);
+        tabela1.setEnabled(false);
+    }
+    
+    public void enabledsOff() throws Exception{
+        fundo.setEnabled(true);
+        pnl_fundo.setEnabled(true);
+        txt_descricao.setEnabled(true);
+        cb_embranco.setEnabled(true);
+        btn_conexao.setEnabled(true);
+        tabela1.setEnabled(true);
+    }
+    
     public void marcaOpcoes(){
        cb_embranco.setSelected(true);
        chx_aliq_entrada.setSelected(true);
@@ -62,6 +76,7 @@ public class Principal extends javax.swing.JFrame {
        chx_pis_entrada.setSelected(true);
        chx_pis_saida.setSelected(true);
     }
+    
     public void conecta() throws Exception {
         try {
             leArquivo();
@@ -261,7 +276,7 @@ public class Principal extends javax.swing.JFrame {
     public void listaProdutosPis() throws Exception {
         Statement st;
         st = con.createStatement();
-        ResultSet rs = st.executeQuery("SELECT * FROM PRODUTO P INNER JOIN PRODUTODETALHE D ON P.CODPROD=D.CODPROD WHERE D.PIS_CST='' ORDER BY D.CODPROD");
+        ResultSet rs = st.executeQuery("SELECT * FROM PRODUTO P INNER JOIN PRODUTODETALHE D ON P.CODPROD=D.CODPROD WHERE D.PIS_CST='' ORDER BY p.descricao");
         DefaultTableModel model = (DefaultTableModel) tabela2.getModel();
         while (rs.next()) {
             String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO"), rs.getString("PIS_CST")};

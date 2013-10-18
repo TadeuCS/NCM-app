@@ -4,7 +4,7 @@
  */
 package View;
 
-import static View.Principal.click;
+import Model.Usuario;
 import java.awt.event.KeyEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,32 +16,50 @@ import javax.swing.JOptionPane;
  */
 public class Login extends javax.swing.JFrame {
 
-    /**
-     * Creates new form Login
-     */
+    Usuario u = new Usuario();
+    Principal p = new Principal();
+
     public Login() {
         initComponents();
-        msg.setVisible(false);
+        try {
+            p.setVisible(true);
+            p.enabledsOn();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
     }
 
-    public void logar() throws Exception {
-        
-        if (txt_senha.getText().compareTo("adm123") == 0) {
-            Principal p = new Principal();
-            p.setVisible(true);
+    public void validaLogin() {
+        if (txt_usuario.getText().compareTo("")==0) {
+            JOptionPane.showMessageDialog(null, "Campo Usuario Obrigatorio!");
+            txt_usuario.requestFocus();
+        }else
+        if (txt_senha.getText().compareTo("")==0) {
+            JOptionPane.showMessageDialog(null, "Campo Senha Obrigatorio!");
+            txt_senha.requestFocus();
+        }else
+            logar(txt_senha.getText(), txt_usuario.getText());
+    }
+
+    public void logar(String senha, String user) {
+        if ((senha.compareTo(u.getSenha()) == 0) && (user.compareTo(u.getUser()) == 0)) {
+            try {
+                p.enabledsOff();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
             setVisible(false);
         } else {
-            JOptionPane.showMessageDialog(null, "Senha Invalida!");
+            JOptionPane.showMessageDialog(null, "Campos Invalidos!");
             txt_senha.setText("");
-            txt_senha.requestDefaultFocus();
+            txt_usuario.setText("");
+            txt_usuario.requestDefaultFocus();
         }
     }
 
     public void enter(KeyEvent e) throws Exception {
-        
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            msg.setVisible(true);
-            logar();
+            validaLogin();
         }
 
     }
@@ -53,7 +71,9 @@ public class Login extends javax.swing.JFrame {
         txt_senha = new javax.swing.JPasswordField();
         jLabel1 = new javax.swing.JLabel();
         btn_entrar = new javax.swing.JButton();
-        msg = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        txt_usuario = new javax.swing.JTextField();
+        btn_sair = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Login");
@@ -77,9 +97,14 @@ public class Login extends javax.swing.JFrame {
             }
         });
 
-        msg.setForeground(new java.awt.Color(153, 153, 153));
-        msg.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        msg.setText("Carregando...");
+        jLabel2.setText("Usuario:");
+
+        btn_sair.setText("Sair");
+        btn_sair.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_sairActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -87,28 +112,38 @@ public class Login extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(msg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(txt_senha, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btn_entrar)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(btn_sair, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(btn_entrar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel1)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txt_senha, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel2)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(txt_usuario, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txt_senha, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1)
-                    .addComponent(btn_entrar))
+                    .addComponent(jLabel2)
+                    .addComponent(txt_usuario, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(msg)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txt_senha, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btn_entrar)
+                    .addComponent(btn_sair))
+                .addContainerGap())
         );
 
         pack();
@@ -117,7 +152,7 @@ public class Login extends javax.swing.JFrame {
 
     private void btn_entrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_entrarActionPerformed
         try {
-            logar();
+            validaLogin();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         }
@@ -132,8 +167,11 @@ public class Login extends javax.swing.JFrame {
     }//GEN-LAST:event_txt_senhaKeyPressed
 
     private void txt_senhaKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_senhaKeyReleased
-        msg.setVisible(false);
     }//GEN-LAST:event_txt_senhaKeyReleased
+
+    private void btn_sairActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_sairActionPerformed
+        setVisible(false);
+    }//GEN-LAST:event_btn_sairActionPerformed
 
     /**
      * @param args the command line arguments
@@ -171,8 +209,10 @@ public class Login extends javax.swing.JFrame {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_entrar;
+    private javax.swing.JButton btn_sair;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel msg;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JPasswordField txt_senha;
+    private javax.swing.JTextField txt_usuario;
     // End of variables declaration//GEN-END:variables
 }
