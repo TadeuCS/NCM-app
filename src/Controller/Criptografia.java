@@ -31,5 +31,6 @@ public class Criptografia {
             encryptedPassword.append(Integer.toHexString(0xFF & digest1[i]));  
         }  
         return encryptedPassword.toString();  
+            
     }  
 }

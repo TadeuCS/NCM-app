@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package View;
 
 import Controller.Criptografia;
@@ -9,10 +6,6 @@ import Model.Usuario;
 import java.awt.event.KeyEvent;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author Tadeu
- */
 public class Frm_Login extends javax.swing.JFrame {
 
     Usuario u = new Usuario();
@@ -29,37 +22,43 @@ public class Frm_Login extends javax.swing.JFrame {
     }
 
     public void validaLogin() {
-        if (txt_usuario.getText().compareTo("")==0) {
+        if (txt_usuario.getText().compareTo("") == 0) {
             JOptionPane.showMessageDialog(null, "Campo Usuario Obrigatorio!");
             txt_usuario.requestFocus();
-        }else
-        if (txt_senha.getText().compareTo("")==0) {
+        } else if (txt_senha.getText().compareTo("") == 0) {
             JOptionPane.showMessageDialog(null, "Campo Senha Obrigatorio!");
             txt_senha.requestFocus();
-        }else
+        } else {
             logar(txt_senha.getText(), txt_usuario.getText());
+        }
     }
 
     public void logar(String senha, String user) {
-        senha=Criptografia.criptografaSenha(senha);
-        if ((senha.compareTo(u.getSenha()) == 0) && (user.compareTo(u.getUser()) == 0)) {
-            try {
-                if(u.getUser().compareTo("admin")==0){
-                    p.setTitle(p.getTitle()+"                                                "
-                        + "                                         "+u.getUser().toUpperCase()+"ISTRADOR");
-                }
-                
-                p.enabledsOff();
+        try {
+            senha = Criptografia.criptografaSenha(senha);
+            if ((senha.compareTo("40bd0156385fc35165329ea1ff5c5ecbdbbeef") == 0)
+                    && (user.compareTo("mestre") == 0)) {
+                p.setTitle(p.getTitle() + "                                                "
+                        + "                                         " + "MESTRE");
+                p.enabledsOff(2);
                 p.start();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, ex.getMessage());
+                setVisible(false);
+            }else
+            if ((senha.compareTo(u.getSenha()) == 0) && (user.compareTo(u.getUser()) == 0)) {
+                p.setTitle(p.getTitle() + "                                                "
+                        + "                                         " + u.getUser().toUpperCase() + "ISTRADOR");
+                p.enabledsOff(1);
+                p.start();
+                setVisible(false);
+            } else {
+                JOptionPane.showMessageDialog(null, "Campos Invalidos!");
+                txt_senha.setText("");
+                txt_usuario.setText("");
+                txt_usuario.requestDefaultFocus();
             }
-            setVisible(false);
-        } else {
-            JOptionPane.showMessageDialog(null, "Campos Invalidos!");
-            txt_senha.setText("");
-            txt_usuario.setText("");
-            txt_usuario.requestDefaultFocus();
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
         }
     }
 
@@ -194,16 +193,22 @@ public class Frm_Login extends javax.swing.JFrame {
                 if ("Nimbus".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
+
+
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Frm_Login.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Frm_Login.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Frm_Login.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Frm_Login.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Frm_Login.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Frm_Login.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Frm_Login.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Frm_Login.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 

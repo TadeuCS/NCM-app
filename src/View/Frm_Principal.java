@@ -4,7 +4,6 @@
  */
 package View;
 
-import Model.Usuario;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.File;
@@ -96,13 +95,13 @@ public class Frm_Principal extends javax.swing.JFrame {
     }
 
     public void start() throws Exception {
-        marcaOpcoes();
         try {
+            marcaOpcoes();
             conecta();
             buscaDadosbyEmpresa();
             listaProdutosPis();
             listaProdutos();
-            quantadade1.setText(tabela1.getRowCount()+"");
+            quantadade1.setText(tabela1.getRowCount() + "");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         }
@@ -117,13 +116,25 @@ public class Frm_Principal extends javax.swing.JFrame {
         tabela1.setEnabled(false);
     }
 
-    public void enabledsOff() throws Exception {
-        fundo.setEnabled(true);
-        pnl_fundo.setEnabled(true);
-        txt_descricao.setEnabled(true);
-        cb_embranco.setEnabled(true);
-        btn_conexao.setEnabled(true);
-        tabela1.setEnabled(true);
+    public void enabledsOff(int permissao) throws Exception {
+        if (permissao == 1) {
+            fundo.setEnabled(true);
+            pnl_fundo.setEnabled(true);
+            txt_descricao.setEnabled(true);
+            cb_embranco.setEnabled(true);
+            btn_conexao.setEnabled(true);
+            tabela1.setEnabled(true);
+        }
+        if (permissao == 2) {
+            pnl_pis_cofins.setEnabled(false);
+            fundo.setEnabled(true);
+            pnl_fundo.setEnabled(true);
+            txt_descricao.setEnabled(true);
+            cb_embranco.setEnabled(true);
+            btn_conexao.setEnabled(true);
+            tabela1.setEnabled(true);
+        }
+
     }
 
     public void marcaOpcoes() {
@@ -156,7 +167,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         limpaTabela1();
         validaEmBranco();
         st = con.createStatement();
-        int qtde1=0;
+        int qtde1 = 0;
         ResultSet rs = st.executeQuery(listaProdutosbyDescricao);
         DefaultTableModel model = (DefaultTableModel) tabela1.getModel();
         while (rs.next()) {
@@ -169,7 +180,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                 model.addRow(linha);
                 qtde1++;
             }
-            quantadade1.setText(qtde1+"");
+            quantadade1.setText(qtde1 + "");
         }
 
     }
@@ -319,7 +330,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         Statement st;
         st = con.createStatement();
         limpaTabela2();
-        int qtde=0;
+        int qtde = 0;
         try {
             ResultSet rs = st.executeQuery("SELECT * FROM PRODUTO P INNER JOIN PRODUTODETALHE D ON P.CODPROD=D.CODPROD WHERE D.PIS_CST='' ORDER BY p.descricao");
             DefaultTableModel model = (DefaultTableModel) tabela2.getModel();
@@ -328,7 +339,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                 String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO"), rs.getString("PIS_CST")};
                 model.addRow(linha);
             }
-            quantadade.setText(qtde+"");
+            quantadade.setText(qtde + "");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
         }
@@ -1135,12 +1146,12 @@ public class Frm_Principal extends javax.swing.JFrame {
 
     private void txt_descricaoKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_descricaoKeyReleased
         try {
-            quantadade1.setText(tabela1.getRowCount()+"");
+            quantadade1.setText(tabela1.getRowCount() + "");
             descricao = txt_descricao.getText().toUpperCase();
             descricao = descricao.replace(" ", "%");
             listaProdutosbyDescricao();
         } catch (Exception ex) {
-           JOptionPane.showMessageDialog(null, ex.getMessage());
+            JOptionPane.showMessageDialog(null, ex.getMessage());
         }
     }//GEN-LAST:event_txt_descricaoKeyReleased
 
