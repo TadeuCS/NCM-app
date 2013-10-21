@@ -9,7 +9,7 @@
 <!-- in the project's Project Properties dialog box.-->
 <!-- Tags que criam um único JAR que tem todas as bibliotecas nele, no diretório 'store' -->  
     
-<project name="NCM App" default="default" basedir=".">
+<project name="NCM-App" default="default" basedir=".">
     <description>Builds, tests, and runs the project NCM App.</description>
     <import file="nbproject/build-impl.xml"/>
     <!--
@@ -74,7 +74,7 @@
 
     -->
     <target name="-post-jar">  
-        <property name="store.jar.name" value="NCM_App"/> <!-- <-coloque o nome do seu .jar nessa tag -->    
+        <property name="store.jar.name" value="NCM-App"/> <!-- <-coloque o nome do seu .jar nessa tag -->    
         <property name="store.dir" value="store"/>  
         <property name="store.jar" value="${store.dir}/${store.jar.name}.jar"/>    
         <echo message="Packaging ${store.jar.name} into a single JAR at ${store.jar}"/>  
