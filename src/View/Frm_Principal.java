@@ -102,6 +102,7 @@ public class Frm_Principal extends javax.swing.JFrame {
             buscaDadosbyEmpresa();
             listaProdutosPis();
             listaProdutos();
+            quantadade1.setText(tabela1.getRowCount()+"");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         }
@@ -114,7 +115,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         cb_embranco.setEnabled(false);
         btn_conexao.setEnabled(false);
         tabela1.setEnabled(false);
-        btn_atualizar1.setEnabled(false);
     }
 
     public void enabledsOff() throws Exception {
@@ -124,7 +124,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         cb_embranco.setEnabled(true);
         btn_conexao.setEnabled(true);
         tabela1.setEnabled(true);
-        btn_atualizar1.setEnabled(true);
     }
 
     public void marcaOpcoes() {
@@ -719,7 +718,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         btn_conexao = new javax.swing.JButton();
         razao = new javax.swing.JLabel();
         cnpj = new javax.swing.JLabel();
-        btn_atualizar1 = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         quantadade1 = new javax.swing.JLabel();
         pnl_pis_cofins = new javax.swing.JPanel();
@@ -773,24 +771,22 @@ public class Frm_Principal extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(tabela1);
         tabela1.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        if (tabela1.getColumnModel().getColumnCount() > 0) {
-            tabela1.getColumnModel().getColumn(0).setMinWidth(100);
-            tabela1.getColumnModel().getColumn(0).setPreferredWidth(100);
-            tabela1.getColumnModel().getColumn(0).setMaxWidth(100);
-            tabela1.getColumnModel().getColumn(1).setPreferredWidth(400);
-            tabela1.getColumnModel().getColumn(2).setMinWidth(100);
-            tabela1.getColumnModel().getColumn(2).setPreferredWidth(100);
-            tabela1.getColumnModel().getColumn(2).setMaxWidth(100);
-        }
+        tabela1.getColumnModel().getColumn(0).setMinWidth(100);
+        tabela1.getColumnModel().getColumn(0).setPreferredWidth(100);
+        tabela1.getColumnModel().getColumn(0).setMaxWidth(100);
+        tabela1.getColumnModel().getColumn(1).setPreferredWidth(400);
+        tabela1.getColumnModel().getColumn(2).setMinWidth(100);
+        tabela1.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tabela1.getColumnModel().getColumn(2).setMaxWidth(100);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         txt_descricao.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txt_descricaoKeyPressed(evt);
-            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txt_descricaoKeyReleased(evt);
+            }
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txt_descricaoKeyPressed(evt);
             }
         });
 
@@ -857,13 +853,6 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        btn_atualizar1.setText("Atualizar");
-        btn_atualizar1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btn_atualizar1ActionPerformed(evt);
-            }
-        });
-
         jLabel5.setText("Em Branco:");
 
         quantadade1.setForeground(new java.awt.Color(153, 0, 0));
@@ -880,9 +869,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)))
                     .addGroup(pnl_fundoLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(btn_atualizar1, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(quantadade1, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -897,13 +884,9 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 233, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnl_fundoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btn_atualizar1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addGroup(pnl_fundoLayout.createSequentialGroup()
-                        .addGroup(pnl_fundoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(quantadade1, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(quantadade1, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         fundo.addTab("NCM", pnl_fundo);
@@ -1042,14 +1025,12 @@ public class Frm_Principal extends javax.swing.JFrame {
         });
         jScrollPane2.setViewportView(tabela2);
         tabela2.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        if (tabela2.getColumnModel().getColumnCount() > 0) {
-            tabela2.getColumnModel().getColumn(0).setMinWidth(100);
-            tabela2.getColumnModel().getColumn(0).setPreferredWidth(100);
-            tabela2.getColumnModel().getColumn(0).setMaxWidth(100);
-            tabela2.getColumnModel().getColumn(2).setMinWidth(100);
-            tabela2.getColumnModel().getColumn(2).setPreferredWidth(100);
-            tabela2.getColumnModel().getColumn(2).setMaxWidth(100);
-        }
+        tabela2.getColumnModel().getColumn(0).setMinWidth(100);
+        tabela2.getColumnModel().getColumn(0).setPreferredWidth(100);
+        tabela2.getColumnModel().getColumn(0).setMaxWidth(100);
+        tabela2.getColumnModel().getColumn(2).setMinWidth(100);
+        tabela2.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tabela2.getColumnModel().getColumn(2).setMaxWidth(100);
 
         quantadade.setForeground(new java.awt.Color(153, 0, 0));
 
@@ -1118,7 +1099,7 @@ public class Frm_Principal extends javax.swing.JFrame {
             .addGroup(pnl_pis_cofinsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(pnl_dados, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
 
         fundo.addTab("PIS/COFINS", pnl_pis_cofins);
@@ -1154,6 +1135,7 @@ public class Frm_Principal extends javax.swing.JFrame {
 
     private void txt_descricaoKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_descricaoKeyReleased
         try {
+            quantadade1.setText(tabela1.getRowCount()+"");
             descricao = txt_descricao.getText().toUpperCase();
             descricao = descricao.replace(" ", "%");
             listaProdutosbyDescricao();
@@ -1232,16 +1214,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_chx_selecionaAllMousePressed
 
-    private void btn_atualizar1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_atualizar1ActionPerformed
-        try {
-            listaProdutosbyDescricao();
-            JOptionPane.showMessageDialog(null, "Tabela Atualizada Com Sucesso!");
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null, ex.getMessage());
-        }
-        
-    }//GEN-LAST:event_btn_atualizar1ActionPerformed
-
     /**
      * @param args the command line arguments
      */
@@ -1284,7 +1256,6 @@ public class Frm_Principal extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_apurar;
     private javax.swing.JButton btn_atualizar;
-    private javax.swing.JButton btn_atualizar1;
     private javax.swing.JButton btn_conexao;
     private javax.swing.JButton btn_executar;
     private javax.swing.JCheckBox cb_embranco;

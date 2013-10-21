@@ -1,2 +1,2 @@
-192.168.0.101
-D:/ResWinCs/Banco/RESULTH.FB
+localhost
+C:/ResWinCs/Banco/r2 supermercadoRESULTH.FB
