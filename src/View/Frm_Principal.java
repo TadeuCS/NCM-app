@@ -345,20 +345,22 @@ public class Frm_Principal extends javax.swing.JFrame {
         jfc.setFileSelectionMode(javax.swing.JFileChooser.FILES_ONLY);
         jfc.showSaveDialog(jfc);
         String teste = jfc.getSelectedFile().getPath();
-        if((teste.contains(".SQL"))||(teste.contains(".SQL"))){
-            dir=teste;
-        }else{
-            dir=teste+".SQL";
+        if ((teste.contains(".SQL")) || (teste.contains(".SQL"))) {
+            dir = teste;
+        } else {
+            dir = teste + ".SQL";
         }
-        dir=dir.replace("\\", "/");
+        dir = dir.replace("\\", "/");
+
     }
 
     public void corrigeEstrutura() throws Exception {
-        Statement st;
-        pegaDiretorio();
-        pw = new PrintWriter(new FileWriter(dir, false));
+
         if (chx_estrutura.getSelectedObjects() != null) {
             try {
+                pegaDiretorio();
+                Statement st;
+                pw = new PrintWriter(new FileWriter(dir, false));
                 st = con.createStatement();
                 ResultSet rs = st.executeQuery("Select * From produto\n"
                         + " Where produto.codprod Not In (Select produtodetalhe.codprod From produtodetalhe\n"
@@ -376,7 +378,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                 pw.close();
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n Linhas geradas: " + contador);
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n Correção gerada!");
-                JOptionPane.showMessageDialog(null, "Arquivo Gerado com Sucesso!\n" + "Caminho: "+dir);
+                JOptionPane.showMessageDialog(null, "Arquivo Gerado com Sucesso!\n" + "Caminho: " + dir);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, e.getMessage());
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "Erro...");
@@ -1078,17 +1080,16 @@ public class Frm_Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_chx_estruturaActionPerformed
 
     private void chx_selecionaAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chx_selecionaAllActionPerformed
-        
     }//GEN-LAST:event_chx_selecionaAllActionPerformed
 
     private void chx_selecionaAllMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_chx_selecionaAllMousePressed
-        if(chx_selecionaAll.getSelectedObjects()!=null){
+        if (chx_selecionaAll.getSelectedObjects() != null) {
             chx_aliq_entrada.setSelected(false);
             chx_estrutura.setSelected(false);
             chx_itens_null.setSelected(false);
             chx_pis_entrada.setSelected(false);
             chx_pis_saida.setSelected(false);
-        }else{
+        } else {
             chx_aliq_entrada.setSelected(true);
             chx_estrutura.setSelected(true);
             chx_itens_null.setSelected(true);
