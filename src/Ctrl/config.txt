@@ -1,0 +1,2 @@
+localhost
+C:/ResWinCs/RESULTH.FB
