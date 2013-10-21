@@ -44,6 +44,11 @@ public class Frm_Login extends javax.swing.JFrame {
         senha=Criptografia.criptografaSenha(senha);
         if ((senha.compareTo(u.getSenha()) == 0) && (user.compareTo(u.getUser()) == 0)) {
             try {
+                if(u.getUser().compareTo("admin")==0){
+                    p.setTitle(p.getTitle()+"                                                "
+                        + "                                         "+u.getUser().toUpperCase()+"ISTRADOR");
+                }
+                
                 p.enabledsOff();
                 p.start();
             } catch (Exception ex) {
