@@ -1,2 +1,2 @@
 localhost
-C:/ResWinCs/Banco/r2 supermercadoRESULTH.FB
+D:/CLIENTES/Feminina/Resulth.FB

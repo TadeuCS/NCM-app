@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import Util.PropertiesManager;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -25,11 +26,12 @@ import javax.swing.JOptionPane;
  * @author Tadeu
  */
 public class Frm_Conexao extends javax.swing.JFrame {
+
     static Frm_Principal p = new Frm_Principal();
-    static String diretorio = "";
     static Statement st;
     static Connection con;
     PrintWriter pw;
+    PropertiesManager props = new PropertiesManager();
 
     public Frm_Conexao() {
         initComponents();
@@ -50,16 +52,11 @@ public class Frm_Conexao extends javax.swing.JFrame {
         }
     }
 
-    public void alteraDiretorio() {
-        diretorio = "";
+    public String alteraDiretorio(String diretorio) {
         if (cbx_tipo.getSelectedIndex() == 0) {
-            diretorio += "localhost:3050/";
+            return "localhost:3050/" + diretorio;
         } else {
-            diretorio += txt_ip.getText() + ":3050/";
-        }
-        if (txt_diretorio.getText().compareTo("") != 0) {
-            diretorio += txt_diretorio.getText().replace("\\", "/");
-            txt_diretorio.setText(txt_diretorio.getText().replace("\\", "/"));
+            return txt_ip.getText() + ":3050/" + diretorio;
         }
     }
 
@@ -81,10 +78,9 @@ public class Frm_Conexao extends javax.swing.JFrame {
                         txt_password.requestFocus();
                     } else {
                         try {
-                            alteraDiretorio();
                             Class.forName("org.firebirdsql.jdbc.FBDriver");
                             con = DriverManager.getConnection(
-                                    "jdbc:firebirdsql://" + diretorio,
+                                    "jdbc:firebirdsql://" + alteraDiretorio(txt_diretorio.getText()),
                                     txt_user.getText(),
                                     txt_password.getText());
                             st = con.createStatement();
@@ -95,6 +91,7 @@ public class Frm_Conexao extends javax.swing.JFrame {
                         } catch (SQLException ex)//caso a conexão não possa se realizada  
                         {
                             status.setText("Sem Conexão!");
+                            System.out.println(ex);
                             JOptionPane.showMessageDialog(null, ex.getMessage());
                         }
                     }
@@ -117,55 +114,39 @@ public class Frm_Conexao extends javax.swing.JFrame {
 
     public void grava() {
         try {
-            pw = new PrintWriter(new FileWriter("C:/NCM-app/src/Controller/config.txt", false));
-            if (cbx_tipo.getSelectedIndex() != 0) {
-                pw.println(txt_ip.getText());
-            } else {
-                pw.println("localhost");
+            if(cbx_tipo.getSelectedIndex()==0){
+                props.altera("ip", "localhost");
+            }else{
+            props.altera("ip", txt_ip.getText());
             }
-            if (txt_diretorio.getText().compareTo("") != 0) {
-                pw.println(txt_diretorio.getText());
-            }
+            props.altera("diretorio", txt_diretorio.getText());
+            props.altera("usuario", txt_user.getText());
+            props.altera("senha", txt_password.getText());
             JOptionPane.showMessageDialog(null, "Configurações salvas com Sucesso!");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "erro ao gravar arquivo! " + e.getMessage());
         }
-        pw.close();
         try {
             p.setVisible(false);
             p.start();
             p.setVisible(true);
-            setVisible(false);
+            dispose();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
         }
-
-//Mesma coisa, salva a String s no arquivo.   
-//Mas lembre, se você for salvar várias linhas, é bom adcionar bw.newLine() depois de salvar cada linha  
     }
 
     public void leArquivo() throws IOException {
-        File file = new File("C:/NCM-app/src/Controller/config.txt");
-        FileReader fr = null;
-        try {
-            fr = new FileReader(file);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Frm_Conexao.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        BufferedReader br = new BufferedReader(fr);
-
-        String linha = br.readLine();
-        txt_ip.setText(linha);
+        txt_ip.setText(props.ler("ip"));
         if (txt_ip.getText().compareTo("localhost") == 0) {
             cbx_tipo.setSelectedIndex(0);
             txt_ip.setText("");
         } else {
             cbx_tipo.setSelectedIndex(1);
         }
-        String linha2 = br.readLine();
-        txt_diretorio.setText(linha2);
-        txt_user.setText("SYSDBA");
-        txt_password.setText("masterkey");
+        txt_diretorio.setText(props.ler("diretorio"));
+        txt_user.setText(props.ler("usuario"));
+        txt_password.setText(props.ler("senha"));
     }
 
     @SuppressWarnings("unchecked")
@@ -337,6 +318,7 @@ public class Frm_Conexao extends javax.swing.JFrame {
 
     private void btn_testarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_testarActionPerformed
         try {
+            txt_diretorio.setText(txt_diretorio.getText().replace("\\", "/"));
             testaConexão();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
@@ -365,7 +347,6 @@ public class Frm_Conexao extends javax.swing.JFrame {
                 if ("Windows".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
-
 
                 }
             }

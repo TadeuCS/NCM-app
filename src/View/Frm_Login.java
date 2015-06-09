@@ -1,4 +1,3 @@
-
 package View;
 
 import Controller.Criptografia;
@@ -36,14 +35,6 @@ public class Frm_Login extends javax.swing.JFrame {
     public void logar(String senha, String user) {
         try {
             senha = Criptografia.criptografaSenha(senha);
-            if ((senha.compareTo("40bd0156385fc35165329ea1ff5c5ecbdbbeef") == 0)
-                    && (user.compareTo("mestre") == 0)) {
-                p.setTitle(p.getTitle() + "                                                "
-                        + "                                         " + "MESTRE");
-                p.enabledsOff(2);
-                p.start();
-                setVisible(false);
-            }else
             if ((senha.compareTo(u.getSenha()) == 0) && (user.compareTo(u.getUser()) == 0)) {
                 p.setTitle(p.getTitle() + "                                                "
                         + "                                         " + u.getUser().toUpperCase() + "ISTRADOR");
@@ -56,7 +47,7 @@ public class Frm_Login extends javax.swing.JFrame {
                 txt_usuario.setText("");
                 txt_usuario.requestDefaultFocus();
             }
-            
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
         }
@@ -66,7 +57,6 @@ public class Frm_Login extends javax.swing.JFrame {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             validaLogin();
         }
-
     }
 
     @SuppressWarnings("unchecked")
@@ -82,14 +72,12 @@ public class Frm_Login extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Login");
+        setUndecorated(true);
         setResizable(false);
 
         txt_senha.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txt_senhaKeyPressed(evt);
-            }
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                txt_senhaKeyReleased(evt);
             }
         });
 
@@ -103,6 +91,12 @@ public class Frm_Login extends javax.swing.JFrame {
         });
 
         jLabel2.setText("Usuario:");
+
+        txt_usuario.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txt_usuarioKeyPressed(evt);
+            }
+        });
 
         btn_sair.setText("Sair");
         btn_sair.addActionListener(new java.awt.event.ActionListener() {
@@ -171,13 +165,16 @@ public class Frm_Login extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_txt_senhaKeyPressed
 
-    private void txt_senhaKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_senhaKeyReleased
-    }//GEN-LAST:event_txt_senhaKeyReleased
-
     private void btn_sairActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_sairActionPerformed
         p.setVisible(false);
         setVisible(false);
     }//GEN-LAST:event_btn_sairActionPerformed
+
+    private void txt_usuarioKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_usuarioKeyPressed
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            txt_senha.requestFocus();
+        }
+    }//GEN-LAST:event_txt_usuarioKeyPressed
 
     /**
      * @param args the command line arguments
@@ -190,10 +187,9 @@ public class Frm_Login extends javax.swing.JFrame {
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
+                if ("Windows".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
-
 
                 }
             }
