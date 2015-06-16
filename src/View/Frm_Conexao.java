@@ -16,8 +16,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import Util.PropertiesManager;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
@@ -27,7 +25,7 @@ import javax.swing.JOptionPane;
  */
 public class Frm_Conexao extends javax.swing.JFrame {
 
-    static Frm_Principal p = new Frm_Principal();
+    static Frm_Principal p;
     static Statement st;
     static Connection con;
     PrintWriter pw;
@@ -35,11 +33,8 @@ public class Frm_Conexao extends javax.swing.JFrame {
 
     public Frm_Conexao() {
         initComponents();
-        try {
-            leArquivo();
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(null, ex.getMessage());
-        }
+        setVisible(true);
+        leArquivo();
     }
 
     public void buscaDiretorio() {
@@ -114,30 +109,28 @@ public class Frm_Conexao extends javax.swing.JFrame {
 
     public void grava() {
         try {
-            if(cbx_tipo.getSelectedIndex()==0){
+            
+            if (cbx_tipo.getSelectedIndex() == 0) {
                 props.altera("ip", "localhost");
-            }else{
-            props.altera("ip", txt_ip.getText());
+            } else {
+                props.altera("ip", txt_ip.getText());
             }
             props.altera("diretorio", txt_diretorio.getText());
             props.altera("usuario", txt_user.getText());
             props.altera("senha", txt_password.getText());
             JOptionPane.showMessageDialog(null, "Configurações salvas com Sucesso!");
+            p= new Frm_Principal();
+            p.setVisible(true);
+            p.start();
+            dispose();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "erro ao gravar arquivo! " + e.getMessage());
         }
-        try {
-            p.setVisible(false);
-            p.start();
-            p.setVisible(true);
-            dispose();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
-        }
     }
 
-    public void leArquivo() throws IOException {
-        txt_ip.setText(props.ler("ip"));
+    public void leArquivo() {
+        try {
+            txt_ip.setText(props.ler("ip"));
         if (txt_ip.getText().compareTo("localhost") == 0) {
             cbx_tipo.setSelectedIndex(0);
             txt_ip.setText("");
@@ -147,6 +140,10 @@ public class Frm_Conexao extends javax.swing.JFrame {
         txt_diretorio.setText(props.ler("diretorio"));
         txt_user.setText(props.ler("usuario"));
         txt_password.setText(props.ler("senha"));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Erro ao carregar dados de configuração. \n"+e.getMessage());
+        }
+        
     }
 
     @SuppressWarnings("unchecked")

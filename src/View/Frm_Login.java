@@ -3,6 +3,8 @@ package View;
 import Controller.Criptografia;
 import Model.Usuario;
 import java.awt.event.KeyEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 public class Frm_Login extends javax.swing.JFrame {
@@ -33,24 +35,19 @@ public class Frm_Login extends javax.swing.JFrame {
     }
 
     public void logar(String senha, String user) {
-        try {
-            senha = Criptografia.criptografaSenha(senha);
-            if ((senha.compareTo(u.getSenha()) == 0) && (user.compareTo(u.getUser()) == 0)) {
-                p.setTitle(p.getTitle() + "                                                "
-                        + "                                         " + u.getUser().toUpperCase() + "ISTRADOR");
-                p.enabledsOff(1);
-                p.start();
-                setVisible(false);
-            } else {
-                JOptionPane.showMessageDialog(null, "Campos Invalidos!");
-                txt_senha.setText("");
-                txt_usuario.setText("");
-                txt_usuario.requestDefaultFocus();
-            }
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
-        }
+          senha = Criptografia.criptografaSenha(senha);
+        if ((senha.compareTo(u.getSenha()) == 0) && (user.compareTo(u.getUser()) == 0)) {
+            p.setTitle(p.getTitle() + "                                                "
+                    + "                                         " + u.getUser().toUpperCase() + "ISTRADOR");
+            p.enabledsOff(1);
+            p.start();
+            setVisible(false);
+        } else {
+            JOptionPane.showMessageDialog(null, "Campos Invalidos!");
+            txt_senha.setText("");
+            txt_usuario.setText("");
+            txt_usuario.requestDefaultFocus();
+        }  
     }
 
     public void enter(KeyEvent e) throws Exception {
