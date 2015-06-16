@@ -1,25 +1,21 @@
 package View;
 
-import Controller.Criptografia;
 import Model.Usuario;
+import Util.Conexao;
+import Util.Criptografia;
+import Util.PropertiesManager;
+import static View.Frm_Principal.st;
 import java.awt.event.KeyEvent;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 public class Frm_Login extends javax.swing.JFrame {
 
     Usuario u = new Usuario();
-    Frm_Principal p = new Frm_Principal();
+    Frm_Principal p;
+    Frm_Conexao c;
 
     public Frm_Login() {
         initComponents();
-        try {
-            p.setVisible(true);
-            p.enabledsOn();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
-        }
     }
 
     public void validaLogin() {
@@ -34,20 +30,33 @@ public class Frm_Login extends javax.swing.JFrame {
         }
     }
 
+    public void conecta() {
+        PropertiesManager props = new PropertiesManager();
+        Conexao conexao = new Conexao();
+        st = conexao.getConexao(
+                props.ler("ip"),
+                props.ler("diretorio"),
+                props.ler("usuario"),
+                props.ler("senha"));
+        if (st != null) {
+            p = new Frm_Principal(st);
+            dispose();
+        } else {
+            c = new Frm_Conexao();
+            dispose();
+        }
+    }
+
     public void logar(String senha, String user) {
-          senha = Criptografia.criptografaSenha(senha);
+        senha = Criptografia.criptografar(senha);
         if ((senha.compareTo(u.getSenha()) == 0) && (user.compareTo(u.getUser()) == 0)) {
-            p.setTitle(p.getTitle() + "                                                "
-                    + "                                         " + u.getUser().toUpperCase() + "ISTRADOR");
-            p.enabledsOff(1);
-            p.start();
-            setVisible(false);
+            conecta();
         } else {
             JOptionPane.showMessageDialog(null, "Campos Invalidos!");
             txt_senha.setText("");
             txt_usuario.setText("");
             txt_usuario.requestDefaultFocus();
-        }  
+        }
     }
 
     public void enter(KeyEvent e) throws Exception {
@@ -72,6 +81,9 @@ public class Frm_Login extends javax.swing.JFrame {
         setUndecorated(true);
         setResizable(false);
 
+        txt_senha.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
+        txt_senha.setForeground(new java.awt.Color(0, 0, 102));
+        txt_senha.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         txt_senha.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txt_senhaKeyPressed(evt);
@@ -89,6 +101,9 @@ public class Frm_Login extends javax.swing.JFrame {
 
         jLabel2.setText("Usuario:");
 
+        txt_usuario.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
+        txt_usuario.setForeground(new java.awt.Color(0, 0, 102));
+        txt_usuario.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         txt_usuario.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 txt_usuarioKeyPressed(evt);
@@ -163,8 +178,7 @@ public class Frm_Login extends javax.swing.JFrame {
     }//GEN-LAST:event_txt_senhaKeyPressed
 
     private void btn_sairActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_sairActionPerformed
-        p.setVisible(false);
-        setVisible(false);
+        dispose();
     }//GEN-LAST:event_btn_sairActionPerformed
 
     private void txt_usuarioKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_usuarioKeyPressed

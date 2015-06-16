@@ -11,7 +11,7 @@ package Model;
 public class Usuario {
 
     public Usuario() {
-        senha = "3e3c5d866425a9f1e9641566ed35943b31ed5c";
+        senha = "80177534a0c99a7e3645b52f2027a48b";
         user= "admin";
     }
     

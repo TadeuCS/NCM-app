@@ -7,10 +7,8 @@ package View;
 import Util.PropertiesManager;
 import java.awt.event.KeyEvent;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,18 +37,21 @@ public class Frm_Principal extends javax.swing.JFrame {
     static String descricao = null;
     static int click = 0;
     static String dir = null;
+    static String ncm=null;
     PrintWriter pw;
     int mes = 0;
     int ano = 0;
     PropertiesManager props;
 
-    public Frm_Principal() {
+    public Frm_Principal(Statement st) {
         initComponents();
+        setVisible(true);
+        start(st);
+        this.st = st;
     }
 
-    public void buscaDadosbyEmpresa() {
+    public void buscaDadosbyEmpresa(Statement st) {
         try {
-            st = con.createStatement();
             ResultSet rs = st.executeQuery("SELECT * FROM FILIAIS");
             while (rs.next()) {
                 razao.setText(rs.getString("NOMEEMPRESA"));
@@ -61,35 +62,12 @@ public class Frm_Principal extends javax.swing.JFrame {
 
     }
 
-    public void conecta() {
-        try {
-            props = new PropertiesManager();
-            Class.forName("org.firebirdsql.jdbc.FBDriver");
-            con = DriverManager.getConnection(
-                    "jdbc:firebirdsql://"
-                    + props.ler("ip") + ":3050/"
-                    + props.ler("diretorio"),
-                    props.ler("usuario"),
-                    props.ler("senha"));
-            st = con.createStatement();
-            buscaDadosbyEmpresa();
-//            listaProdutos();
-            listaProdutosPis();
-            qtde.setText(tabela1.getRowCount() + "");
-        } catch (ClassNotFoundException ex)//caso o driver não seja localizado  
-        {
-            JOptionPane.showMessageDialog(null, "Driver não encontrado!");
-        } catch (SQLException ex)//caso a conexão não possa se realizada  
-        {
-            JOptionPane.showMessageDialog(null, "Problemas na conexao com a fonte de dados");
-            Frm_Conexao c = new Frm_Conexao();
-            this.dispose();
-        }
-    }
-
-    public void start() {
+    public void start(Statement st) {
         marcaOpcoes();
-        conecta();
+        buscaDadosbyEmpresa(st);
+        listaProdutos(st);
+        listaProdutosPis(st);
+//        qtde.setText(tabela1.getRowCount() + "");
     }
 
     public void enabledsOn() throws Exception {
@@ -158,10 +136,9 @@ public class Frm_Principal extends javax.swing.JFrame {
         }
     }
 
-    public void listaProdutos() {
-        retiraNullos();
+    public void listaProdutos(Statement st) {
+        retiraNullos(st);
         try {
-            st = con.createStatement();
             rs = st.executeQuery(validaEmBranco());
             DefaultTableModel model = (DefaultTableModel) tabela1.getModel();
             limpaTabela(tabela1);
@@ -174,7 +151,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                     model.addRow(linha);
                 }
             }
-            qtde.setText(tabela1.getRowCount()+"");
+            qtde.setText(tabela1.getRowCount() + "");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Erro ao listar os produtos. \n" + e.getMessage());
         }
@@ -195,20 +172,23 @@ public class Frm_Principal extends javax.swing.JFrame {
     }
 
     public void validaNCM(String codigoNcm) throws Exception {
-        DefaultTableModel model = (DefaultTableModel) tabela1.getModel();
-        st = con.createStatement();
-        rs = st.executeQuery("SELECT * FROM CLASFISC WHERE CODIGONCM='" + codigoNcm + "'");
-        if (rs.next()) {
-            codclasfis = rs.getString("CODCLASFIS");
-            codprod = tabela1.getValueAt(tabela1.getSelectedRow(), 0).toString();
-            try {
-                st.executeUpdate("UPDATE PRODUTO SET CODCLASFIS = '" + codclasfis + "' WHERE CODPROD ='" + codprod + "'");
-                JOptionPane.showMessageDialog(null, "NCM: " + codigoNcm + " foi inserido no Produto: " + codprod);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, e.getMessage());
+        if (codigoNcm.length() == 8) {
+            DefaultTableModel model = (DefaultTableModel) tabela1.getModel();
+            rs = st.executeQuery("SELECT * FROM CLASFISC WHERE CODIGONCM='" + codigoNcm + "'");
+            if (rs.next()) {
+                codclasfis = rs.getString("CODCLASFIS");
+                codprod = tabela1.getValueAt(tabela1.getSelectedRow(), 0).toString();
+                try {
+                    st.executeUpdate("UPDATE PRODUTO SET CODCLASFIS = '" + codclasfis + "' WHERE CODPROD ='" + codprod + "'");
+                    JOptionPane.showMessageDialog(null, "NCM: " + codigoNcm + " foi inserido no Produto: " + codprod);
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, e.getMessage());
+                }
+            } else {
+                insereNCM(codigoNcm);
             }
         } else {
-            insereNCM(codigoNcm);
+            JOptionPane.showMessageDialog(null, "NCM deve conter 8 caracteres!");
         }
     }
 
@@ -257,7 +237,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     public void ctrl_V(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_V) {
             try {
-                tabela1.setValueAt(btn_conexao.getText(), tabela1.getSelectedRow(), 2);
+                tabela1.setValueAt(ncm, tabela1.getSelectedRow(), 2);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage());
             }
@@ -267,7 +247,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     public void ctrl_C(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_C) {
             try {
-                btn_conexao.setText(tabela1.getValueAt(tabela1.getSelectedRow(), 2).toString());
+                ncm=tabela1.getValueAt(tabela1.getSelectedRow(), 2).toString();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage());
             }
@@ -294,9 +274,9 @@ public class Frm_Principal extends javax.swing.JFrame {
         }
     }
 
-    public void retiraNullos() {
+    public void retiraNullos(Statement st) {
         try {
-            PreparedStatement ps = con.prepareStatement("UPDATE PRODUTO SET CODCLASFIS='' WHERE CODCLASFIS IS NULL");
+            PreparedStatement ps = st.getConnection().prepareStatement("UPDATE PRODUTO SET CODCLASFIS='' WHERE CODCLASFIS IS NULL");
             ps.executeUpdate();
             ps.close();
         } catch (Exception e) {
@@ -304,10 +284,8 @@ public class Frm_Principal extends javax.swing.JFrame {
         }
     }
 
-    public void listaProdutosPis() {
+    public void listaProdutosPis(Statement st) {
         try {
-            Statement st;
-            st = con.createStatement();
             limpaTabela(tabela2);
             int qtde = 0;
             try {
@@ -344,8 +322,6 @@ public class Frm_Principal extends javax.swing.JFrame {
     }
 
     public void validaPis(String pis, String codprod) throws Exception {
-        Statement st;
-        st = con.createStatement();
         try {
             if ((pis.compareTo("01") == 0) && (tabela2.getSelectedRow() >= 0)) {
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST = '" + pis + "',COFINS_CST='" + pis + "',"
@@ -727,6 +703,8 @@ public class Frm_Principal extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         qtde = new javax.swing.JLabel();
         btn_conexao = new javax.swing.JLabel();
+        btn_bloquear = new javax.swing.JButton();
+        btn_desativar = new javax.swing.JButton();
         pnl_pis_cofins = new javax.swing.JPanel();
         pnl_dados = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -770,14 +748,13 @@ public class Frm_Principal extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        tabela1.setColumnSelectionAllowed(true);
+        tabela1.getTableHeader().setReorderingAllowed(false);
         tabela1.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 tabela1KeyPressed(evt);
             }
         });
         jScrollPane1.setViewportView(tabela1);
-        tabela1.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         if (tabela1.getColumnModel().getColumnCount() > 0) {
             tabela1.getColumnModel().getColumn(0).setMinWidth(100);
             tabela1.getColumnModel().getColumn(0).setPreferredWidth(100);
@@ -805,8 +782,18 @@ public class Frm_Principal extends javax.swing.JFrame {
         razao.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
 
         chx_ativo.setText("Ativo");
+        chx_ativo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chx_ativoActionPerformed(evt);
+            }
+        });
 
         chx_bloqueado.setText("Bloqueado");
+        chx_bloqueado.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chx_bloqueadoActionPerformed(evt);
+            }
+        });
 
         jLabel6.setText("Tipo Produtos:");
 
@@ -879,6 +866,20 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
         });
 
+        btn_bloquear.setText("Bloquear");
+        btn_bloquear.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_bloquearActionPerformed(evt);
+            }
+        });
+
+        btn_desativar.setText("Desativar");
+        btn_desativar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btn_desativarActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnl_fundoLayout = new javax.swing.GroupLayout(pnl_fundo);
         pnl_fundo.setLayout(pnl_fundoLayout);
         pnl_fundoLayout.setHorizontalGroup(
@@ -890,6 +891,10 @@ public class Frm_Principal extends javax.swing.JFrame {
                         .addGap(10, 10, 10)
                         .addComponent(btn_conexao)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btn_desativar)
+                        .addGap(18, 18, 18)
+                        .addComponent(btn_bloquear)
+                        .addGap(237, 237, 237)
                         .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(qtde, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -906,7 +911,10 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 235, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(pnl_fundoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(pnl_fundoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btn_bloquear)
+                        .addComponent(btn_desativar))
                     .addComponent(qtde, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btn_conexao))
                 .addContainerGap())
@@ -1040,14 +1048,13 @@ public class Frm_Principal extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        tabela2.setColumnSelectionAllowed(true);
+        tabela2.getTableHeader().setReorderingAllowed(false);
         tabela2.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 tabela2KeyPressed(evt);
             }
         });
         jScrollPane2.setViewportView(tabela2);
-        tabela2.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         if (tabela2.getColumnModel().getColumnCount() > 0) {
             tabela2.getColumnModel().getColumn(0).setMinWidth(100);
             tabela2.getColumnModel().getColumn(0).setPreferredWidth(100);
@@ -1196,7 +1203,7 @@ public class Frm_Principal extends javax.swing.JFrame {
 
     private void btn_atualizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_atualizarActionPerformed
         try {
-            listaProdutosPis();
+            listaProdutosPis(st);
             JOptionPane.showMessageDialog(null, "Tabela Atualizada Com Sucesso!");
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
@@ -1227,7 +1234,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_chx_selecionaAllMousePressed
 
     private void btn_buscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_buscarActionPerformed
-        listaProdutos();
+        listaProdutos(st);
     }//GEN-LAST:event_btn_buscarActionPerformed
 
     private void btn_conexaoMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_conexaoMousePressed
@@ -1235,6 +1242,38 @@ public class Frm_Principal extends javax.swing.JFrame {
         c.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btn_conexaoMousePressed
+
+    private void btn_desativarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_desativarActionPerformed
+        if (tabela1.getSelectedRowCount() == 1) {
+            desativar(tabela1.getValueAt(tabela1.getSelectedRow(), 0).toString());
+        } else {
+            JOptionPane.showMessageDialog(null, "Selecione apenas uma linha!");
+        }
+    }//GEN-LAST:event_btn_desativarActionPerformed
+
+    private void btn_bloquearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_bloquearActionPerformed
+        if (tabela1.getSelectedRowCount() == 1) {
+            bloquear(tabela1.getValueAt(tabela1.getSelectedRow(), 0).toString());
+        } else {
+            JOptionPane.showMessageDialog(null, "Selecione apenas uma linha!");
+        }
+    }//GEN-LAST:event_btn_bloquearActionPerformed
+
+    private void chx_ativoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chx_ativoActionPerformed
+        if (chx_ativo.getSelectedObjects() != null) {
+            btn_desativar.setText("Desativar");
+        } else {
+            btn_desativar.setText("Ativar");
+        }
+    }//GEN-LAST:event_chx_ativoActionPerformed
+
+    private void chx_bloqueadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chx_bloqueadoActionPerformed
+        if (chx_bloqueado.getSelectedObjects() != null) {
+            btn_bloquear.setText("Desbloquear");
+        } else {
+            btn_bloquear.setText("Bloquear");
+        }
+    }//GEN-LAST:event_chx_bloqueadoActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1271,15 +1310,16 @@ public class Frm_Principal extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Frm_Principal().setVisible(true);
             }
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_apurar;
     private javax.swing.JButton btn_atualizar;
+    private javax.swing.JButton btn_bloquear;
     private javax.swing.JButton btn_buscar;
     private javax.swing.JLabel btn_conexao;
+    private javax.swing.JButton btn_desativar;
     private javax.swing.JButton btn_executar;
     private com.toedter.calendar.JYearChooser cbx_ano;
     private com.toedter.calendar.JMonthChooser cbx_mes;
@@ -1314,4 +1354,38 @@ public class Frm_Principal extends javax.swing.JFrame {
     private javax.swing.JTextArea txt_areaProcesso;
     private javax.swing.JTextField txt_descricao;
     // End of variables declaration//GEN-END:variables
+
+    private void desativar(String codigo) {
+        try {
+            if (btn_desativar.getText().equals("Desativar") == false) {
+                st.executeUpdate("UPDATE PRODUTO SET ATIVO = 'S' where CODPROD = " + codigo + ";");
+                JOptionPane.showMessageDialog(null, "Produto " + codigo + " ATIVADO com sucesso!");
+            } else {
+                st.executeUpdate("UPDATE PRODUTO SET ATIVO = 'N' where CODPROD = " + codigo + ";");
+                JOptionPane.showMessageDialog(null, "Produto " + codigo + " DESATIVADO com sucesso!");
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        } finally {
+            limpaTabela(tabela1);
+            listaProdutos(st);
+        }
+    }
+
+    private void bloquear(String codigo) {
+        try {
+            if (btn_bloquear.getText().equals("Bloquear") == true) {
+                st.executeUpdate("UPDATE PRODUTO SET PRODBLOQUEADO = 'S' where CODPROD = " + codigo + ";");
+                JOptionPane.showMessageDialog(null, "Produto " + codigo + " BLOQUEADO com sucesso!");
+            } else {
+                st.executeUpdate("UPDATE PRODUTO SET PRODBLOQUEADO = 'N' where CODPROD = " + codigo + ";");
+                JOptionPane.showMessageDialog(null, "Produto " + codigo + " DESBLOQUEADO com sucesso!");
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }finally{
+            limpaTabela(tabela1);
+            listaProdutos(st);
+        }
+    }
 }

@@ -4,14 +4,13 @@
  */
 package View;
 
+import Util.Conexao;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import Util.PropertiesManager;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
@@ -25,17 +24,13 @@ public class Frm_Conexao extends javax.swing.JFrame {
     static Statement st;
     static Connection con;
     PrintWriter pw;
-    PropertiesManager props = new PropertiesManager();
+    PropertiesManager props;
+    Conexao conexao;
 
     public Frm_Conexao() {
         initComponents();
         setVisible(true);
-        leArquivo();
-        try {
-            testaConexão();
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, "Erro ao Conectar no Banco de dados!\n"+ex.getMessage());
-        }
+        carregaDados();
     }
 
     public void buscaDiretorio() {
@@ -56,7 +51,7 @@ public class Frm_Conexao extends javax.swing.JFrame {
         }
     }
 
-    public void testaConexão() throws SQLException {
+    public void testaConexão() {
         txt_diretorio.setText(txt_diretorio.getText().replace("\\", "/"));
         if ((cbx_tipo.getSelectedIndex() != 0) && (txt_ip.getText().compareTo("") == 0)) {
             JOptionPane.showMessageDialog(null, "IP é Obrigatorio se Tipo de conexão é REMOTO");
@@ -109,9 +104,19 @@ public class Frm_Conexao extends javax.swing.JFrame {
         }
     }
 
+    public void conecta() {
+        conexao = new Conexao();
+        p = new Frm_Principal(conexao.getConexao(
+                txt_ip.getText(),
+                txt_diretorio.getText(),
+                txt_user.getText(),
+                txt_password.getText()));
+        dispose();
+    }
+
     public void grava() {
         try {
-            
+            props=new PropertiesManager();
             if (cbx_tipo.getSelectedIndex() == 0) {
                 props.altera("ip", "localhost");
             } else {
@@ -121,31 +126,29 @@ public class Frm_Conexao extends javax.swing.JFrame {
             props.altera("usuario", txt_user.getText());
             props.altera("senha", txt_password.getText());
             JOptionPane.showMessageDialog(null, "Configurações salvas com Sucesso!");
-            p= new Frm_Principal();
-            p.setVisible(true);
-            p.start();
-            dispose();
+            conecta();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "erro ao gravar arquivo! " + e.getMessage());
         }
     }
 
-    public void leArquivo() {
+    public void carregaDados() {
         try {
+            props=new PropertiesManager();
             txt_ip.setText(props.ler("ip"));
-        if (txt_ip.getText().compareTo("localhost") == 0) {
-            cbx_tipo.setSelectedIndex(0);
-            txt_ip.setText("");
-        } else {
-            cbx_tipo.setSelectedIndex(1);
-        }
-        txt_diretorio.setText(props.ler("diretorio"));
-        txt_user.setText(props.ler("usuario"));
-        txt_password.setText(props.ler("senha"));
+            if (txt_ip.getText().compareTo("localhost") == 0) {
+                cbx_tipo.setSelectedIndex(0);
+                txt_ip.setText("");
+            } else {
+                cbx_tipo.setSelectedIndex(1);
+            }
+            txt_diretorio.setText(props.ler("diretorio"));
+            txt_user.setText(props.ler("usuario"));
+            txt_password.setText(props.ler("senha"));
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Erro ao carregar dados de configuração. \n"+e.getMessage());
+            JOptionPane.showMessageDialog(null, "Erro ao carregar dados de configuração. \n" + e.getMessage());
         }
-        
+
     }
 
     @SuppressWarnings("unchecked")
@@ -315,12 +318,7 @@ public class Frm_Conexao extends javax.swing.JFrame {
     }//GEN-LAST:event_btn_buscarActionPerformed
 
     private void btn_testarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_testarActionPerformed
-        try {
-            
-            testaConexão();
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, ex.getMessage());
-        }
+        testaConexão();
     }//GEN-LAST:event_btn_testarActionPerformed
 
     private void cbx_tipoFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cbx_tipoFocusLost
