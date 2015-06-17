@@ -43,14 +43,6 @@ public class Frm_Conexao extends javax.swing.JFrame {
         }
     }
 
-    public String alteraDiretorio(String diretorio) {
-        if (cbx_tipo.getSelectedIndex() == 0) {
-            return "localhost:3050/" + diretorio;
-        } else {
-            return txt_ip.getText() + ":3050/" + diretorio;
-        }
-    }
-
     public void testaConexão() {
         txt_diretorio.setText(txt_diretorio.getText().replace("\\", "/"));
         if ((cbx_tipo.getSelectedIndex() != 0) && (txt_ip.getText().compareTo("") == 0)) {
@@ -69,22 +61,12 @@ public class Frm_Conexao extends javax.swing.JFrame {
                         JOptionPane.showMessageDialog(null, "Campo Password é Obrigatorio");
                         txt_password.requestFocus();
                     } else {
-                        try {
-                            Class.forName("org.firebirdsql.jdbc.FBDriver");
-                            con = DriverManager.getConnection(
-                                    "jdbc:firebirdsql://" + alteraDiretorio(txt_diretorio.getText()),
-                                    txt_user.getText(),
-                                    txt_password.getText());
-                            st = con.createStatement();
+                        conexao = new Conexao();
+                        if (conexao.getConexao(getIP(), txt_diretorio.getText(), txt_user.getText(), txt_password.getText()) != null) {
                             status.setText("Conexão Bem Sucedida!");
-                        } catch (ClassNotFoundException ex)//caso o driver não seja localizado  
-                        {
-                            JOptionPane.showMessageDialog(null, "Driver não encontrado!");
-                        } catch (SQLException ex)//caso a conexão não possa se realizada  
-                        {
+                        } else {
                             status.setText("Sem Conexão!");
-                            System.out.println(ex);
-                            JOptionPane.showMessageDialog(null, ex.getMessage());
+                            JOptionPane.showMessageDialog(null, "Erro ao conectar no banco de dados neste diretório!\n" + txt_diretorio.getText());
                         }
                     }
                 }
@@ -104,19 +86,32 @@ public class Frm_Conexao extends javax.swing.JFrame {
         }
     }
 
+    public String getIP() {
+        if (cbx_tipo.getSelectedIndex() == 0) {
+            return "localhost";
+        } else {
+            return txt_ip.getText();
+        }
+    }
+
     public void conecta() {
         conexao = new Conexao();
-        p = new Frm_Principal(conexao.getConexao(
-                txt_ip.getText(),
-                txt_diretorio.getText(),
-                txt_user.getText(),
-                txt_password.getText()));
-        dispose();
+        st = conexao.getConexao(getIP(), txt_diretorio.getText(), txt_user.getText(), txt_password.getText());
+        if (st != null) {
+            p = new Frm_Principal(conexao.getConexao(
+                    getIP(),
+                    txt_diretorio.getText(),
+                    txt_user.getText(),
+                    txt_password.getText()));
+            dispose();
+        } else {
+            JOptionPane.showMessageDialog(null, "Erro ao se conectar no banco de dados!");
+            dispose();
+        }
     }
 
     public void grava() {
         try {
-            props=new PropertiesManager();
             if (cbx_tipo.getSelectedIndex() == 0) {
                 props.altera("ip", "localhost");
             } else {
@@ -134,7 +129,7 @@ public class Frm_Conexao extends javax.swing.JFrame {
 
     public void carregaDados() {
         try {
-            props=new PropertiesManager();
+            props = new PropertiesManager();
             txt_ip.setText(props.ler("ip"));
             if (txt_ip.getText().compareTo("localhost") == 0) {
                 cbx_tipo.setSelectedIndex(0);
@@ -145,6 +140,7 @@ public class Frm_Conexao extends javax.swing.JFrame {
             txt_diretorio.setText(props.ler("diretorio"));
             txt_user.setText(props.ler("usuario"));
             txt_password.setText(props.ler("senha"));
+            testaConexão();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Erro ao carregar dados de configuração. \n" + e.getMessage());
         }

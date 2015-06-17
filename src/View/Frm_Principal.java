@@ -37,7 +37,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     static String descricao = null;
     static int click = 0;
     static String dir = null;
-    static String ncm=null;
+    static String ncm = null;
     PrintWriter pw;
     int mes = 0;
     int ano = 0;
@@ -45,14 +45,15 @@ public class Frm_Principal extends javax.swing.JFrame {
 
     public Frm_Principal(Statement st) {
         initComponents();
-        setVisible(true);
-        start(st);
         this.st = st;
+        setVisible(true);
+        start(this.st);
+
     }
 
     public void buscaDadosbyEmpresa(Statement st) {
         try {
-            ResultSet rs = st.executeQuery("SELECT * FROM FILIAIS");
+            rs = st.executeQuery("SELECT * FROM FILIAIS");
             while (rs.next()) {
                 razao.setText(rs.getString("NOMEEMPRESA"));
             }
@@ -67,7 +68,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         buscaDadosbyEmpresa(st);
         listaProdutos(st);
         listaProdutosPis(st);
-//        qtde.setText(tabela1.getRowCount() + "");
     }
 
     public void enabledsOn() throws Exception {
@@ -247,7 +247,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     public void ctrl_C(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_C) {
             try {
-                ncm=tabela1.getValueAt(tabela1.getSelectedRow(), 2).toString();
+                ncm = tabela1.getValueAt(tabela1.getSelectedRow(), 2).toString();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage());
             }
@@ -368,10 +368,8 @@ public class Frm_Principal extends javax.swing.JFrame {
         if (chx_estrutura.getSelectedObjects() != null) {
             try {
                 pegaDiretorio();
-                Statement st;
                 pw = new PrintWriter(new FileWriter(dir, false));
-                st = con.createStatement();
-                ResultSet rs = st.executeQuery("Select * From produto\n"
+                rs = st.executeQuery("Select * From produto\n"
                         + " Where produto.codprod Not In (Select produtodetalhe.codprod From produtodetalhe\n"
                         + "                                Where produtodetalhe.codprod = produto.codprod)");
                 int contador = 0;
@@ -398,12 +396,8 @@ public class Frm_Principal extends javax.swing.JFrame {
     public void corrigePisEntrada() throws Exception {
         if (chx_pis_entrada.getSelectedObjects() != null) {
             String quantidade = null;
-            PreparedStatement ps;
-            Statement st;
             try {
-
-                st = con.createStatement();
-                ResultSet rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PISENT_CST <>"
+                rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PISENT_CST <>"
                         + " COFINSENT_CST OR (PIS_CST='01' AND PISENT_CST<>'50')\n"
                         + "                        OR (PIS_CST='04' AND PISENT_CST<>'70')\n"
                         + "                        OR (PIS_CST='06' AND PISENT_CST<>'73')");
@@ -415,18 +409,10 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
             txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n\nPis/Cofins de Entrada" + "\nRealizando Correções... ");
             try {
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PISENT_CST='50' WHERE PIS_CST='01';");
-                ps.executeUpdate();
-                ps.close();
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PISENT_CST='70' WHERE PIS_CST='04';");
-                ps.executeUpdate();
-                ps.close();
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PISENT_CST='73' WHERE PIS_CST='06';");
-                ps.executeUpdate();
-                ps.close();
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET COFINSENT_CST=PISENT_CST;");
-                ps.executeUpdate();
-                ps.close();
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PISENT_CST='50' WHERE PIS_CST='01';");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PISENT_CST='70' WHERE PIS_CST='04';");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PISENT_CST='73' WHERE PIS_CST='06';");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET COFINSENT_CST=PISENT_CST;");
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorreções Feitas: " + quantidade);
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nFim da Correção!");
             } catch (Exception e) {
@@ -439,12 +425,8 @@ public class Frm_Principal extends javax.swing.JFrame {
     public void corrigePisSaida() throws Exception {
         if (chx_pis_saida.getSelectedObjects() != null) {
             String quantidade = null;
-            PreparedStatement ps;
-            Statement st;
             try {
-
-                st = con.createStatement();
-                ResultSet rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PIS_CST <> COFINS_CST\n"
+                rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PIS_CST <> COFINS_CST\n"
                         + "                         OR (PISENT_CST='50' AND PIS_CST<>'01')\n"
                         + "                         OR (PISENT_CST='70' AND PIS_CST<>'04')\n"
                         + "                         OR (PISENT_CST='73' AND PIS_CST<>'06')");
@@ -456,18 +438,10 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
             txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n\nPis/Cofins de Saida" + "\nRealizando Correções... ");
             try {
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PIS_CST='01' WHERE PISENT_CST='50';");
-                ps.executeUpdate();
-                ps.close();
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PIS_CST='04' WHERE PISENT_CST='70';");
-                ps.executeUpdate();
-                ps.close();
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PIS_CST='06' WHERE PISENT_CST='73';");
-                ps.executeUpdate();
-                ps.close();
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET COFINS_CST=PIS_CST;");
-                ps.executeUpdate();
-                ps.close();
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST='01' WHERE PISENT_CST='50';");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST='04' WHERE PISENT_CST='70';");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST='06' WHERE PISENT_CST='73';");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET COFINS_CST=PIS_CST;");
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorreções Feitas: " + quantidade);
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nFim da Correção!");
             } catch (Exception e) {
@@ -480,12 +454,8 @@ public class Frm_Principal extends javax.swing.JFrame {
     public void corrigeAliquotas() throws Exception {
         if (chx_aliq_entrada.getSelectedObjects() != null) {
             String quantidade = null;
-            PreparedStatement ps;
-            Statement st;
             try {
-
-                st = con.createStatement();
-                ResultSet rs = st.executeQuery("select COUNT(*) as qtde from produtodetalhe where (ALIQPIS<>ALIQPISENT or ALIQCOFINS<>ALIQCOFINSENT) or"
+                rs = st.executeQuery("select COUNT(*) as qtde from produtodetalhe where (ALIQPIS<>ALIQPISENT or ALIQCOFINS<>ALIQCOFINSENT) or"
                         + "(PIS_CST='01' AND (ALIQPIS<>'1.65' OR ALIQPISENT<>'1.65')) OR"
                         + "(PIS_CST='04' AND (ALIQPIS<>'0.00' OR ALIQPISENT<>'0.00')) OR"
                         + "(PIS_CST='06' AND (ALIQPIS<>'0.00' OR ALIQPISENT<>'0.00'))");
@@ -497,18 +467,10 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
             txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n\nAliquotas Entrada/Saida" + "\nRealizando Correções... ");
             try {
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET ALIQPIS='1.65',ALIQCOFINS='7.60',ALIQPISENT='1.65',ALIQCOFINSENT='7.60' WHERE PIS_CST='01';");
-                ps.executeUpdate();
-                ps.close();
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE PIS_CST='04';\n");
-                ps.executeUpdate();
-                ps.close();
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE PIS_CST='06';\n");
-                ps.executeUpdate();
-                ps.close();
-                ps = con.prepareStatement("UPDATE PRODUTODETALHE SET ALIQPIS=ALIQPISENT,ALIQCOFINS=ALIQCOFINSENT;");
-                ps.executeUpdate();
-                ps.close();
+                st.executeUpdate("UPDATE PRODUTODETALHE SET ALIQPIS='1.65',ALIQCOFINS='7.60',ALIQPISENT='1.65',ALIQCOFINSENT='7.60' WHERE PIS_CST='01';");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE PIS_CST='04';\n");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE PIS_CST='06';\n");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET ALIQPIS=ALIQPISENT,ALIQCOFINS=ALIQCOFINSENT;");
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorreções Feitas: " + quantidade);
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nFim da Correção!");
             } catch (Exception e) {
@@ -522,9 +484,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         if (chx_itens_null.getSelectedObjects() != null) {
             String quantidade = null;
             try {
-                Statement st;
-                st = con.createStatement();
-                ResultSet rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PIS_CST IS NULL");
+                rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PIS_CST IS NULL");
                 if (rs.next()) {
                     quantidade = rs.getString("qtde");
                 }
@@ -533,11 +493,9 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
             txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n\nItens Nullos" + "\nRealizando Correções... ");
             try {
-                PreparedStatement ps = con.prepareStatement("UPDATE PRODUTODETALHE SET PIS_CST='',COFINS_CST='',"
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST='',COFINS_CST='',"
                         + "PISENT_CST='',COFINSENT_CST='',ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE "
                         + "PIS_CST IS NULL");
-                ps.executeUpdate();
-                ps.close();
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorreções Feitas: " + quantidade);
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nFim da Correção!");
             } catch (Exception e) {
@@ -548,7 +506,6 @@ public class Frm_Principal extends javax.swing.JFrame {
     }
 
     public void apurar() throws Exception {
-
         int mes = cbx_mes.getMonth() + 1;
         int ano = cbx_ano.getYear();
         try {
@@ -565,7 +522,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         mes = cbx_mes.getMonth() + 1;
         ano = cbx_ano.getYear();
         try {
-            ps = con.prepareStatement("Update NfEntri Set CstPis = (Select PisEnt_Cst From Produtodetalhe\n"
+            st.executeUpdate("Update NfEntri Set CstPis = (Select PisEnt_Cst From Produtodetalhe\n"
                     + "                             Where ProdutoDetalhe.Codprod = NfEntri.Codprod),\n"
                     + "                   AliqPis = (Select AliqPisEnt From Produtodetalhe\n"
                     + "                             Where ProdutoDetalhe.Codprod = NfEntri.Codprod),\n"
@@ -616,8 +573,6 @@ public class Frm_Principal extends javax.swing.JFrame {
                     + "                             And Nfentrc.Codfornec = NFEntri.Codfornec \n"
                     + "                             And extract(month from nfentrc.dt_entrada)=" + mes + " and extract(year from nfentrc.dt_entrada)=" + ano + ");");
 
-            ps.executeUpdate();
-            ps.close();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         }
@@ -628,7 +583,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         mes = cbx_mes.getMonth() + 1;
         ano = cbx_ano.getYear();
         try {
-            ps = con.prepareStatement("Update NfEntrc Set VlrPis = (Select Sum(vlrPis) From NfEntri\n"
+            st.executeUpdate("Update NfEntrc Set VlrPis = (Select Sum(vlrPis) From NfEntri\n"
                     + "                             Where NfEntri.CodEmpresa = NfEntrc.CodEmpresa\n"
                     + "                               And NfEntri.Numeronf = NfEntrc.Numeronf \n"
                     + "                               And NfEntri.Codfornec = NfEntrc.Codfornec),\n"
@@ -637,8 +592,6 @@ public class Frm_Principal extends javax.swing.JFrame {
                     + "                               And NfEntri.Numeronf = NfEntrc.Numeronf \n"
                     + "                               And NfEntri.Codfornec = NfEntrc.Codfornec)\n"
                     + "where extract(month from NfEntrc.Dt_Entrada)=" + mes + " and extract(year from NfEntrc.Dt_Entrada)=" + ano + ";");
-            ps.executeUpdate();
-            ps.close();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         }
@@ -648,7 +601,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         mes = cbx_mes.getMonth() + 1;
         ano = cbx_ano.getYear();
         try {
-            ps = con.prepareStatement("Update NfSaidi Set CstPis = (Select Pis_Cst From Produtodetalhe\n"
+            st.executeUpdate("Update NfSaidi Set CstPis = (Select Pis_Cst From Produtodetalhe\n"
                     + "                             Where ProdutoDetalhe.Codprod = NfSaidi.Codprod),\n"
                     + "                   AliqPis = (Select AliqPis From Produtodetalhe\n"
                     + "                             Where ProdutoDetalhe.Codprod = NfSaidi.Codprod),\n"
@@ -664,8 +617,6 @@ public class Frm_Principal extends javax.swing.JFrame {
                     + "                           Where NfSaidc.Codempresa = NfSaidi.Codempresa\n"
                     + "                             And NfSaidc.Serie = NFSaidi.Serie\n"
                     + "                             And extract(month from NfSaidc.Dt_Emissao)=" + mes + " and extract(year from NfSaidc.Dt_Emissao)=" + ano + ");");
-            ps.executeUpdate();
-            ps.close();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         }
@@ -773,7 +724,7 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
         });
 
-        jLabel3.setText("Descrição:");
+        jLabel3.setText("Filtro:");
 
         chx_emBranco.setText("Em Branco");
 
@@ -1159,11 +1110,12 @@ public class Frm_Principal extends javax.swing.JFrame {
 
     private void txt_descricaoKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_descricaoKeyReleased
         try {
-            filtrar();
-            qtde.setText(tabela1.getRowCount() + "");
-//            descricao = txt_descricao.getText().toUpperCase();
-//            descricao = descricao.replace(" ", "%");
-//            listaProdutosbyDescricao();
+            if (tabela1.getSelectedRowCount() > 0) {
+                filtrar();
+                qtde.setText(tabela1.getRowCount() + "");
+            } else {
+                JOptionPane.showMessageDialog(null, "Não existe nenhum produto na tabela abaixo, com os filtros selecionados!");
+            }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(null, ex.getMessage());
         }
@@ -1383,7 +1335,7 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
-        }finally{
+        } finally {
             limpaTabela(tabela1);
             listaProdutos(st);
         }

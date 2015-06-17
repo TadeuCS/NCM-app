@@ -224,7 +224,7 @@
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel3">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Descri&#xe7;&#xe3;o:"/>
+                    <Property name="text" type="java.lang.String" value="Filtro:"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JCheckBox" name="chx_emBranco">
