@@ -5,6 +5,7 @@
 package View;
 
 import Util.PropertiesManager;
+import Util.Validade;
 import java.awt.event.KeyEvent;
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -12,7 +13,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,12 +47,40 @@ public class Frm_Principal extends javax.swing.JFrame {
     int ano = 0;
     PropertiesManager props;
     DefaultTableModel model;
+    String bloqueado = null;
+    //quando bloqueado='N' retorno: 8d9c307cb7f3c4a32822a51922d1ceaa
+    //quando bloqueado ='S' retorno: 5dbc98dcc983a70728bd082d1a47546e
 
     public Frm_Principal(Statement st) {
         initComponents();
-        this.st = st;
-        setVisible(true);
-        start(this.st);
+        verificaValidade();
+    }
+
+    public void verificaValidade() {
+        Validade validade = new Validade();
+        Date data = new Date();
+        props = new PropertiesManager();
+        SimpleDateFormat sd = new SimpleDateFormat("dd/MM/yyyy");
+        bloqueado = props.ler("bloqueado");
+        System.out.println(validade.validaSistema(data));
+        if ((bloqueado.equals("8d9c307cb7f3c4a32822a51922d1ceaa") == true) && (validade.validaSistema(data) == true)) {
+            txt_validade.setText(props.ler("validade"));
+            this.st = st;
+            setVisible(true);
+            start(this.st);
+        } else {
+            props.altera("bloqueado", "5dbc98dcc983a70728bd082d1a47546e");
+            JOptionPane.showMessageDialog(null, "Sua licença expirou, entre em contato com o desenvolvedor e requisite um código de liberação!");
+            
+            String resposta=JOptionPane.showInputDialog(null, "Informe o código de liberação: ");
+            if (resposta.equals(validade.getDia(data) * validade.getMes(data)+1 * validade.getAno(data) * 5) == true) {
+                Date novaValidade = validade.addDayOfDate(data, mes);
+                props.altera("bloqueado", "8d9c307cb7f3c4a32822a51922d1ceaa");
+                props.altera("validade", validade.addDayOfDate(data, 30) + "");
+            } else {
+                JOptionPane.showMessageDialog(null, "Código de liberação inválido!");
+            }
+        }
     }
 
     public void buscaDadosbyEmpresa(Statement st) {
@@ -194,6 +226,8 @@ public class Frm_Principal extends javax.swing.JFrame {
         btn_conexao = new javax.swing.JLabel();
         btn_bloquear = new javax.swing.JButton();
         btn_desativar = new javax.swing.JButton();
+        jLabel9 = new javax.swing.JLabel();
+        txt_validade = new javax.swing.JTextField();
         pnl_aba2 = new javax.swing.JPanel();
         pnl_dados = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -379,6 +413,11 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
         });
 
+        jLabel9.setText("Validade:");
+
+        txt_validade.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        txt_validade.setEnabled(false);
+
         javax.swing.GroupLayout pnl_aba1Layout = new javax.swing.GroupLayout(pnl_aba1);
         pnl_aba1.setLayout(pnl_aba1Layout);
         pnl_aba1Layout.setHorizontalGroup(
@@ -389,11 +428,15 @@ public class Frm_Principal extends javax.swing.JFrame {
                     .addGroup(pnl_aba1Layout.createSequentialGroup()
                         .addGap(10, 10, 10)
                         .addComponent(btn_conexao)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel9)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(txt_validade, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btn_desativar)
                         .addGap(18, 18, 18)
                         .addComponent(btn_bloquear)
-                        .addGap(238, 238, 238)
+                        .addGap(216, 216, 216)
                         .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(qtdeNCM, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -408,15 +451,21 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(qtdeNCM, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(btn_bloquear)
-                        .addComponent(btn_desativar))
-                    .addComponent(btn_conexao, javax.swing.GroupLayout.Alignment.LEADING))
+                .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnl_aba1Layout.createSequentialGroup()
+                        .addGap(9, 9, 9)
+                        .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jLabel9)
+                                .addComponent(txt_validade, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(btn_bloquear)
+                                .addComponent(btn_desativar))
+                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(qtdeNCM, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(pnl_aba1Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btn_conexao)))
                 .addContainerGap())
         );
 
@@ -514,7 +563,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addComponent(pnl_dados, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 13, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
                 .addGroup(pnl_aba2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(qtdePisCofins, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -959,6 +1008,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
@@ -982,6 +1032,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     private javax.swing.JTextField txt_filtroNCM;
     private javax.swing.JTextField txt_filtroNatReceita;
     private javax.swing.JTextField txt_filtroPisCofins;
+    private javax.swing.JTextField txt_validade;
     // End of variables declaration//GEN-END:variables
 
     private void listaProdutos(Statement st) {
@@ -1516,7 +1567,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                         if (JOptionPane.showConfirmDialog(null, "NATUREZA DA RECEITA " + natReceita + " Cadastrada com Sucesso! \n"
                                 + "Deseja Utiliza-la no NCM: " + tabela3.getValueAt(tabela3.getSelectedRow(), 1), "", JOptionPane.YES_NO_OPTION) == 0) {
                             st.executeUpdate("UPDATE CLASFISC SET CODNATRECEITA = '" + natReceita + "' WHERE CODCLASFIS ='"
-                                    + tabela3.getValueAt(tabela3.getSelectedRow(), 0).toString()+"';");
+                                    + tabela3.getValueAt(tabela3.getSelectedRow(), 0).toString() + "';");
                         }
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(null, e.getMessage());
