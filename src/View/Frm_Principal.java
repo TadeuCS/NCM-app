@@ -7,19 +7,13 @@ package View;
 import Util.PropertiesManager;
 import Util.Validade;
 import java.awt.event.KeyEvent;
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -62,23 +56,23 @@ public class Frm_Principal extends javax.swing.JFrame {
         props = new PropertiesManager();
         SimpleDateFormat sd = new SimpleDateFormat("dd/MM/yyyy");
         bloqueado = props.ler("bloqueado");
-        System.out.println(validade.validaSistema(data));
         if ((bloqueado.equals("8d9c307cb7f3c4a32822a51922d1ceaa") == true) && (validade.validaSistema(data) == true)) {
             txt_validade.setText(props.ler("validade"));
             this.st = st;
             setVisible(true);
             start(this.st);
         } else {
-            props.altera("bloqueado", "5dbc98dcc983a70728bd082d1a47546e");
             JOptionPane.showMessageDialog(null, "Sua licença expirou, entre em contato com o desenvolvedor e requisite um código de liberação!");
-            
             String resposta=JOptionPane.showInputDialog(null, "Informe o código de liberação: ");
-            if (resposta.equals(validade.getDia(data) * validade.getMes(data)+1 * validade.getAno(data) * 5) == true) {
-                Date novaValidade = validade.addDayOfDate(data, mes);
+            if (Integer.parseInt(resposta)==validade.getDia(data)*validade.getMes(data)*validade.getAno(data)* 5) {
                 props.altera("bloqueado", "8d9c307cb7f3c4a32822a51922d1ceaa");
                 props.altera("validade", validade.addDayOfDate(data, 30) + "");
+                JOptionPane.showMessageDialog(null, "Licença prorrogada com sucesso!\n Validade: "+validade.addDayOfDate(data, 30));
+                verificaValidade();
             } else {
                 JOptionPane.showMessageDialog(null, "Código de liberação inválido!");
+                props.altera("bloqueado", "5dbc98dcc983a70728bd082d1a47546e");
+                dispose();
             }
         }
     }

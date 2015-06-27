@@ -17,21 +17,23 @@ public class Validade {
 
     GregorianCalendar c = new GregorianCalendar();
     PropertiesManager props;
-    final SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+    SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
     int dia;
     int mes;
     int ano;
 
     public int getDia(Date data) {
+        c.setTime(data);
         return c.get(Calendar.DAY_OF_MONTH);
     }
 
     public int getMes(Date data) {
-        c=(GregorianCalendar) GregorianCalendar.getInstance();
-        return c.get(Calendar.MONTH);
+        c.setTime(data);
+        return c.get(Calendar.MONTH)+1;
     }
 
     public int getAno(Date data) {
+        c.setTime(data);
         return c.get(Calendar.YEAR);
     }
 
@@ -57,29 +59,27 @@ public class Validade {
     public void comparaDatas(Date data) {
         try {
             props = new PropertiesManager();
-            Date dataValidade = new Date(format.parse(props.ler("validade")).getTime());
-            Date data2 = new Date(format.parse(format.format(data)).getTime());
-
-            if (dataValidade.before(data2)) {
-                System.out.println("Data: dataValidade é posterior à data");
+            Date dataValidade = new Date(props.ler("validade"));
+            Date dataAtual = new Date();
+            if (dataAtual.before(dataValidade)) {
+                System.out.println(format.format(dataAtual) + " antes que " + format.format(dataValidade));
             } else {
-                System.out.println("Data: dataValidade é inferior à data");
+                System.out.println(format.format(dataAtual) + " depois que " + format.format(dataValidade));
             }
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Erro ao comparar as datas:" + e.getMessage());
         }
 
     }
 
-    public Date addDayOfDate(Date data, int dias) {
-        c.setTime(data);
-        c.add(Calendar.DATE, +dias);
-        Date dataAlterada = null;
+    public String addDayOfDate(Date data, int dias) {
+        Calendar c = Calendar.getInstance();
         try {
-            dataAlterada = new Date(format.parse(format.format(c)).getTime());
+            c.setTime(data);
+            c.add(Calendar.DATE, +dias);
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println("Erro ao adicionar " + dias + " a data de valide: " + e.getMessage());
         }
-        return dataAlterada;
+        return format.format(c.getTime());
     }
 }

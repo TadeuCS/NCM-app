@@ -5,7 +5,6 @@
  */
 package Util;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -19,16 +18,10 @@ public class Teste {
      */
     public static void main(String[] args) {
         Validade validade = new Validade();
-        SimpleDateFormat sd=new SimpleDateFormat("dd/MM/yyyy");
-        Date dataValidade = new Date("2015/06/27");
-        Date dataAtual = new Date();
-//        System.out.println(sd.format(dataAtual));
-//        System.out.println(sd.format(dataValidade));
-        if(dataAtual.before(dataValidade)){
-            System.out.println(sd.format(dataAtual)+ " antes que "+sd.format(dataValidade));
-        }else{
-            System.out.println(sd.format(dataAtual)+ " depois que "+sd.format(dataValidade));
-        }
+        Date data= new Date();
+        validade.comparaDatas(data);
+//        validade.addDayOfDate(data, 2);
+        System.out.println(validade.getMes(data));
     }
 
 }
