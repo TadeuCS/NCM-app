@@ -5,7 +5,6 @@
  */
 package Util;
 
-import java.util.Date;
 
 /**
  *
@@ -17,11 +16,9 @@ public class Teste {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        Validade validade = new Validade();
-        Date data= new Date();
-        validade.comparaDatas(data);
-//        validade.addDayOfDate(data, 2);
-        System.out.println(validade.getMes(data));
+        Criptografa criptografa=new Criptografa();
+        System.out.println(criptografa.criptografa("Tadeu"));
+        System.out.println(criptografa.descriptografa(criptografa.criptografa("Tadeu")));
     }
 
 }
