@@ -45,7 +45,7 @@ public class Validade {
         try {
             dataValidade = new Date(format.parse(props.ler("validade")).getTime());
             data = new Date(format.parse(format.format(data2)).getTime());
-            if (dataValidade.after(data)) {
+            if ((dataValidade.after(data))||(dataValidade.getTime()==data.getTime())) {
                 retorno = true;
             } else {
                 retorno = false;
