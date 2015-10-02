@@ -48,6 +48,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     public Frm_Principal(Statement st) {
         initComponents();
         verificaValidade();
+        buscaDadosbyEmpresa(st);
     }
 
     public void verificaValidade() {
@@ -135,7 +136,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         pnl_aba1.setEnabled(false);
         txt_filtroNCM.setEnabled(false);
         chx_emBranco.setEnabled(false);
-        btn_conexao.setEnabled(false);
         tabela1.setEnabled(false);
     }
 
@@ -145,7 +145,6 @@ public class Frm_Principal extends javax.swing.JFrame {
             pnl_aba1.setEnabled(true);
             txt_filtroNCM.setEnabled(true);
             chx_emBranco.setEnabled(true);
-            btn_conexao.setEnabled(true);
             tabela1.setEnabled(true);
         }
         if (permissao == 2) {
@@ -154,7 +153,6 @@ public class Frm_Principal extends javax.swing.JFrame {
             pnl_aba1.setEnabled(true);
             txt_filtroNCM.setEnabled(true);
             chx_emBranco.setEnabled(true);
-            btn_conexao.setEnabled(true);
             tabela1.setEnabled(true);
         }
 
@@ -217,7 +215,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         btn_buscar = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         qtdeNCM = new javax.swing.JLabel();
-        btn_conexao = new javax.swing.JLabel();
         btn_bloquear = new javax.swing.JButton();
         btn_desativar = new javax.swing.JButton();
         jLabel9 = new javax.swing.JLabel();
@@ -385,14 +382,6 @@ public class Frm_Principal extends javax.swing.JFrame {
 
         qtdeNCM.setForeground(new java.awt.Color(153, 0, 0));
 
-        btn_conexao.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/conexao.png"))); // NOI18N
-        btn_conexao.setToolTipText("Conexao com BD");
-        btn_conexao.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                btn_conexaoMousePressed(evt);
-            }
-        });
-
         btn_bloquear.setText("Bloquear");
         btn_bloquear.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -420,9 +409,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addGap(10, 10, 10)
                 .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(pnl_aba1Layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(btn_conexao)
-                        .addGap(18, 18, 18)
+                        .addGap(48, 48, 48)
                         .addComponent(jLabel9)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(txt_validade, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -445,21 +432,16 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(9, 9, 9)
                 .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnl_aba1Layout.createSequentialGroup()
-                        .addGap(9, 9, 9)
-                        .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel9)
-                                .addComponent(txt_validade, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(btn_bloquear)
-                                .addComponent(btn_desativar))
-                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(qtdeNCM, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(pnl_aba1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btn_conexao)))
+                    .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel9)
+                        .addComponent(txt_validade, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(btn_bloquear)
+                        .addComponent(btn_desativar))
+                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(qtdeNCM, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
@@ -887,12 +869,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         listaProdutos(st);
     }//GEN-LAST:event_btn_buscarActionPerformed
 
-    private void btn_conexaoMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_conexaoMousePressed
-        Frm_Conexao c = new Frm_Conexao();
-        c.setVisible(true);
-        this.dispose();
-    }//GEN-LAST:event_btn_conexaoMousePressed
-
     private void btn_desativarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_desativarActionPerformed
         if (tabela1.getSelectedRowCount() == 1) {
             desativar(tabela1.getValueAt(tabela1.getSelectedRow(), 0).toString());
@@ -978,7 +954,6 @@ public class Frm_Principal extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btn_bloquear;
     private javax.swing.JButton btn_buscar;
-    private javax.swing.JLabel btn_conexao;
     private javax.swing.JButton btn_desativar;
     private javax.swing.JButton btn_executar;
     private com.toedter.calendar.JYearChooser cbx_ano;
@@ -1053,7 +1028,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         model = getModelByTabela(tabela2);
         limpaTabela(model);
         try {
-            rs = st.executeQuery("SELECT * FROM PRODUTO P INNER JOIN PRODUTODETALHE D ON P.CODPROD=D.CODPROD WHERE D.PIS_CST='' ORDER BY p.descricao");
+            rs = st.executeQuery("SELECT * FROM PRODUTO P INNER JOIN PRODUTODETALHE D ON P.CODPROD=D.CODPROD ORDER BY p.descricao");
             while (rs.next()) {
                 String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO"), rs.getString("PIS_CST")};
                 model.addRow(linha);
