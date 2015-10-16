@@ -98,12 +98,11 @@ public class Frm_Conexao extends javax.swing.JFrame {
         conexao = new Conexao();
         st = conexao.getConexao(getIP(), txt_diretorio.getText(), txt_user.getText(), txt_password.getText());
         if (st != null) {
-            p = new Frm_Principal(conexao.getConexao(
-                    getIP(),
-                    txt_diretorio.getText(),
-                    txt_user.getText(),
-                    txt_password.getText()));
-            dispose();
+//            p = new Frm_Principal(conexao.getConexao(
+//                    getIP(),
+//                    txt_diretorio.getText(),
+//                    txt_user.getText(),
+//                    txt_password.getText()));
         } else {
             JOptionPane.showMessageDialog(null, "Erro ao se conectar no banco de dados!");
             dispose();
@@ -121,7 +120,9 @@ public class Frm_Conexao extends javax.swing.JFrame {
             props.altera("usuario", txt_user.getText());
             props.altera("senha", txt_password.getText());
             JOptionPane.showMessageDialog(null, "Configurações salvas com Sucesso!");
-            conecta();
+            Frm_Login f= new Frm_Login();
+            f.setVisible(true);
+            dispose();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "erro ao gravar arquivo! " + e.getMessage());
         }
@@ -140,7 +141,6 @@ public class Frm_Conexao extends javax.swing.JFrame {
             txt_diretorio.setText(props.ler("diretorio"));
             txt_user.setText(props.ler("usuario"));
             txt_password.setText(props.ler("senha"));
-            testaConexão();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Erro ao carregar dados de configuração. \n" + e.getMessage());
         }

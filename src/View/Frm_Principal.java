@@ -5,7 +5,9 @@
 package View;
 
 import Util.PropertiesManager;
+import Util.TableConfig;
 import Util.Validade;
+import java.awt.Event;
 import java.awt.event.KeyEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javafx.scene.layout.Region;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -45,10 +48,11 @@ public class Frm_Principal extends javax.swing.JFrame {
     //quando bloqueado='N' retorno: 8d9c307cb7f3c4a32822a51922d1ceaa
     //quando bloqueado ='S' retorno: 5dbc98dcc983a70728bd082d1a47546e
 
-    public Frm_Principal(Statement st) {
+    public Frm_Principal(Statement sessao) {
         initComponents();
+        loading.setVisible(false);
+        this.st = sessao;
         verificaValidade();
-        buscaDadosbyEmpresa(st);
     }
 
     public void verificaValidade() {
@@ -59,16 +63,23 @@ public class Frm_Principal extends javax.swing.JFrame {
         bloqueado = props.ler("bloqueado");
         if ((bloqueado.equals("8d9c307cb7f3c4a32822a51922d1ceaa") == true) && (validade.validaSistema(data) == true)) {
             txt_validade.setText(props.ler("validade"));
-            this.st = st;
             setVisible(true);
-            start(this.st);
+            Thread acao;
+            acao = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    start(st);
+                }
+            }
+            );
+            acao.start();
         } else {
             JOptionPane.showMessageDialog(null, "Sua licença expirou, entre em contato com o desenvolvedor e requisite um código de liberação!");
-            String resposta=JOptionPane.showInputDialog(null, "Informe o código de liberação: ");
-            if (Integer.parseInt(resposta)==validade.getDia(data)*validade.getMes(data)*validade.getAno(data)* 5) {
+            String resposta = JOptionPane.showInputDialog(null, "Informe o código de liberação: ");
+            if (Integer.parseInt(resposta) == validade.getDia(data) * validade.getMes(data) * validade.getAno(data) * 5) {
                 props.altera("bloqueado", "8d9c307cb7f3c4a32822a51922d1ceaa");
                 props.altera("validade", validade.addDayOfDate(data, 30) + "");
-                JOptionPane.showMessageDialog(null, "Licença prorrogada com sucesso!\n Validade: "+validade.addDayOfDate(data, 30));
+                JOptionPane.showMessageDialog(null, "Licença prorrogada com sucesso!\n Validade: " + validade.addDayOfDate(data, 30));
                 verificaValidade();
             } else {
                 JOptionPane.showMessageDialog(null, "Código de liberação inválido!");
@@ -82,7 +93,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         try {
             rs = st.executeQuery("SELECT * FROM FILIAIS");
             while (rs.next()) {
-                razao.setText(rs.getString("NOMEEMPRESA"));
+                this.setTitle(this.getTitle() + rs.getString("NOMEEMPRESA") + "\t\t");
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Erro ao carregar o nome da Empresa! \n" + e.getMessage());
@@ -91,12 +102,18 @@ public class Frm_Principal extends javax.swing.JFrame {
     }
 
     public void start(Statement st) {
-        marcaOpcoes();
-        buscaDadosbyEmpresa(st);
-        retiraNullos(st);
-        listaProdutos(st);
-        listaProdutosPis(st);
-        listaProdutoByNatureza(st);
+        try {
+            buscaDadosbyEmpresa(st);
+            marcaOpcoes();
+            retiraNullos(st);
+            barra.setMaximum(contaQtdeDeItens());
+            listaProdutosNCM(st);
+            listaProdutosPis(st);
+            listaProdutoByNatureza(st);
+            barra.setVisible(false);
+        } catch (Exception e) {
+            dispose();
+        }
     }
 
     public void filtrar(JTextField campo, JTable tabela, JLabel qtde) {
@@ -135,7 +152,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         fundo.setEnabled(false);
         pnl_aba1.setEnabled(false);
         txt_filtroNCM.setEnabled(false);
-        chx_emBranco.setEnabled(false);
         tabela1.setEnabled(false);
     }
 
@@ -144,7 +160,6 @@ public class Frm_Principal extends javax.swing.JFrame {
             fundo.setEnabled(true);
             pnl_aba1.setEnabled(true);
             txt_filtroNCM.setEnabled(true);
-            chx_emBranco.setEnabled(true);
             tabela1.setEnabled(true);
         }
         if (permissao == 2) {
@@ -152,7 +167,6 @@ public class Frm_Principal extends javax.swing.JFrame {
             fundo.setEnabled(true);
             pnl_aba1.setEnabled(true);
             txt_filtroNCM.setEnabled(true);
-            chx_emBranco.setEnabled(true);
             tabela1.setEnabled(true);
         }
 
@@ -160,7 +174,6 @@ public class Frm_Principal extends javax.swing.JFrame {
 
     public void marcaOpcoes() {
         chx_selecionaAll.setSelected(true);
-        chx_emBranco.setSelected(true);
         chx_ativo.setSelected(true);
         chx_bloqueado.setSelected(false);
         chx_aliq_entrada.setSelected(true);
@@ -179,22 +192,6 @@ public class Frm_Principal extends javax.swing.JFrame {
         }
     }
 
-    public String validaEmBranco() {
-        if (chx_emBranco.getSelectedObjects() != null) {
-            return "SELECT P.CODPROD,P.DESCRICAO,C.CODIGONCM FROM PRODUTO P "
-                    + "INNER JOIN CLASFISC C ON P.CODCLASFIS=C.CODCLASFIS"
-                    + " WHERE P.ATIVO ='" + validaCheckbox(chx_ativo)
-                    + "' and P.prodbloqueado ='" + validaCheckbox(chx_bloqueado)
-                    + "' and P.CODCLASFIS='' order by p.descricao;";
-        } else {
-            return "SELECT P.CODPROD,P.DESCRICAO,C.CODIGONCM FROM PRODUTO P "
-                    + "INNER JOIN CLASFISC C ON P.CODCLASFIS=C.CODCLASFIS"
-                    + " WHERE P.ATIVO ='" + validaCheckbox(chx_ativo)
-                    + "' and P.prodbloqueado ='" + validaCheckbox(chx_bloqueado)
-                    + "' and P.CODCLASFIS <>'' order by p.descricao;";
-        }
-    }
-
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -206,19 +203,17 @@ public class Frm_Principal extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         txt_filtroNCM = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        chx_emBranco = new javax.swing.JCheckBox();
-        jLabel4 = new javax.swing.JLabel();
-        razao = new javax.swing.JLabel();
         chx_ativo = new javax.swing.JCheckBox();
         chx_bloqueado = new javax.swing.JCheckBox();
         jLabel6 = new javax.swing.JLabel();
         btn_buscar = new javax.swing.JButton();
-        jLabel5 = new javax.swing.JLabel();
-        qtdeNCM = new javax.swing.JLabel();
         btn_bloquear = new javax.swing.JButton();
         btn_desativar = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        qtdeNCM = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         txt_validade = new javax.swing.JTextField();
+        barra = new javax.swing.JProgressBar();
         pnl_aba2 = new javax.swing.JPanel();
         pnl_dados = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -231,7 +226,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         pnl_dados1 = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         txt_filtroNatReceita = new javax.swing.JTextField();
-        qtdeNatReceita = new javax.swing.JLabel();
+        loading = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         btn_executar = new javax.swing.JButton();
         jScrollPane5 = new javax.swing.JScrollPane();
@@ -249,6 +244,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         chx_pis_entrada = new javax.swing.JCheckBox();
         chx_aliq_entrada = new javax.swing.JCheckBox();
         chx_apuracao = new javax.swing.JCheckBox();
+        qtdeNatReceita = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("NCM App 1.3");
@@ -299,12 +295,6 @@ public class Frm_Principal extends javax.swing.JFrame {
 
         jLabel3.setText("Filtro:");
 
-        chx_emBranco.setText("Em Branco");
-
-        jLabel4.setText("Tipo NCM:");
-
-        razao.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-
         chx_ativo.setText("Ativo");
         chx_ativo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -321,7 +311,7 @@ public class Frm_Principal extends javax.swing.JFrame {
 
         jLabel6.setText("Tipo Produtos:");
 
-        btn_buscar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/buscar.gif"))); // NOI18N
+        btn_buscar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/carregar.png"))); // NOI18N
         btn_buscar.setToolTipText("Buscar");
         btn_buscar.setBorder(null);
         btn_buscar.addActionListener(new java.awt.event.ActionListener() {
@@ -329,58 +319,6 @@ public class Frm_Principal extends javax.swing.JFrame {
                 btn_buscarActionPerformed(evt);
             }
         });
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(17, 17, 17)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(chx_emBranco)
-                        .addGap(18, 18, 18)
-                        .addComponent(razao, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(chx_ativo)
-                        .addGap(18, 18, 18)
-                        .addComponent(chx_bloqueado))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(txt_filtroNCM)
-                        .addGap(18, 18, 18)
-                        .addComponent(btn_buscar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(txt_filtroNCM, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btn_buscar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(chx_emBranco)
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(chx_ativo)
-                        .addComponent(chx_bloqueado)
-                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(razao, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jLabel5.setText("Linhas:");
-
-        qtdeNCM.setForeground(new java.awt.Color(153, 0, 0));
 
         btn_bloquear.setText("Bloquear");
         btn_bloquear.addActionListener(new java.awt.event.ActionListener() {
@@ -396,51 +334,104 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
         });
 
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(17, 17, 17)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(chx_ativo)
+                        .addGap(18, 18, 18)
+                        .addComponent(chx_bloqueado)
+                        .addGap(18, 18, 18)
+                        .addComponent(btn_buscar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 286, Short.MAX_VALUE)
+                        .addComponent(btn_desativar)
+                        .addGap(18, 18, 18)
+                        .addComponent(btn_bloquear))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(txt_filtroNCM)))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(txt_filtroNCM, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(chx_ativo)
+                        .addComponent(chx_bloqueado)
+                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btn_bloquear)
+                        .addComponent(btn_desativar))
+                    .addComponent(btn_buscar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jLabel5.setText("Linhas:");
+
+        qtdeNCM.setForeground(new java.awt.Color(153, 0, 0));
+
         jLabel9.setText("Validade:");
 
         txt_validade.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         txt_validade.setEnabled(false);
+
+        barra.setForeground(new java.awt.Color(0, 153, 0));
+        barra.setToolTipText("Produtos Carregados");
+        barra.setStringPainted(true);
 
         javax.swing.GroupLayout pnl_aba1Layout = new javax.swing.GroupLayout(pnl_aba1);
         pnl_aba1.setLayout(pnl_aba1Layout);
         pnl_aba1Layout.setHorizontalGroup(
             pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnl_aba1Layout.createSequentialGroup()
-                .addGap(10, 10, 10)
                 .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(pnl_aba1Layout.createSequentialGroup()
-                        .addGap(48, 48, 48)
+                        .addGap(10, 10, 10)
+                        .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jScrollPane1)))
+                    .addGroup(pnl_aba1Layout.createSequentialGroup()
+                        .addContainerGap()
                         .addComponent(jLabel9)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(txt_validade, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addComponent(barra, javax.swing.GroupLayout.PREFERRED_SIZE, 458, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btn_desativar)
-                        .addGap(18, 18, 18)
-                        .addComponent(btn_bloquear)
-                        .addGap(216, 216, 216)
-                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(qtdeNCM, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 751, Short.MAX_VALUE))
+                        .addComponent(qtdeNCM, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         pnl_aba1Layout.setVerticalGroup(
             pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnl_aba1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(9, 9, 9)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel9)
-                        .addComponent(txt_validade, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(btn_bloquear)
-                        .addComponent(btn_desativar))
-                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(pnl_aba1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel9)
+                            .addComponent(txt_validade, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(barra, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnl_aba1Layout.createSequentialGroup()
+                            .addGap(1, 1, 1)
+                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(qtdeNCM, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
@@ -538,8 +529,8 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(pnl_dados, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 294, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(pnl_aba2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(qtdePisCofins, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -579,10 +570,13 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        qtdeNatReceita.setForeground(new java.awt.Color(153, 0, 0));
+        loading.setForeground(new java.awt.Color(153, 0, 0));
+        loading.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        loading.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/loading.gif"))); // NOI18N
 
         jLabel7.setText("Linhas:");
 
+        btn_executar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/IMG/executar.png"))); // NOI18N
         btn_executar.setText("Executar");
         btn_executar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -607,6 +601,16 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
         });
         tabela3.getTableHeader().setReorderingAllowed(false);
+        tabela3.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                tabela3FocusGained(evt);
+            }
+        });
+        tabela3.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tabela3MousePressed(evt);
+            }
+        });
         tabela3.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 tabela3KeyPressed(evt);
@@ -739,30 +743,31 @@ public class Frm_Principal extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        qtdeNatReceita.setForeground(new java.awt.Color(153, 0, 0));
+
         javax.swing.GroupLayout pnl_aba3Layout = new javax.swing.GroupLayout(pnl_aba3);
         pnl_aba3.setLayout(pnl_aba3Layout);
         pnl_aba3Layout.setHorizontalGroup(
             pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnl_aba3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addGroup(pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(pnl_aba3Layout.createSequentialGroup()
                         .addComponent(jLabel7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(qtdeNatReceita, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(qtdeNatReceita, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 332, Short.MAX_VALUE)
                     .addComponent(pnl_dados1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGroup(pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnl_aba3Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jScrollPane3)
-                            .addComponent(pnl_opcoes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(pnl_aba3Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jScrollPane3)
+                    .addComponent(pnl_opcoes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnl_aba3Layout.createSequentialGroup()
+                        .addComponent(loading, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btn_executar, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pnl_aba3Layout.setVerticalGroup(
             pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -777,12 +782,19 @@ public class Frm_Principal extends javax.swing.JFrame {
                         .addComponent(jScrollPane3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(pnl_opcoes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(11, 11, 11)
                 .addGroup(pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(qtdeNatReceita, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btn_executar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                    .addGroup(pnl_aba3Layout.createSequentialGroup()
+                        .addGap(11, 11, 11)
+                        .addGroup(pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(btn_executar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(loading))
+                        .addContainerGap())
+                    .addGroup(pnl_aba3Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(pnl_aba3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(qtdeNatReceita, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
         btn_executar.getAccessibleContext().setAccessibleName("");
@@ -821,19 +833,29 @@ public class Frm_Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_tabela2KeyPressed
 
     private void btn_executarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_executarActionPerformed
-        txt_areaProcesso.setText("");
-        if (chx_estrutura.getSelectedObjects() != null || chx_itens_null.getSelectedObjects() != null
-                || chx_pis_saida.getSelectedObjects() != null || chx_pis_entrada.getSelectedObjects() != null
-                || chx_aliq_entrada.getSelectedObjects() != null || chx_apuracao.getSelectedObjects() != null) {
-            corrigeEstrutura();
-            corrigeItensNulos();
-            corrigePisEntrada();
-            corrigePisSaida();
-            corrigeAliquotas();
-            apurar();
-        } else {
-            txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nSelecione Pelo menos uma opção!");
+        Thread acao;
+        acao = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                txt_areaProcesso.setText("");
+                if (chx_estrutura.getSelectedObjects() != null || chx_itens_null.getSelectedObjects() != null
+                        || chx_pis_saida.getSelectedObjects() != null || chx_pis_entrada.getSelectedObjects() != null
+                        || chx_aliq_entrada.getSelectedObjects() != null || chx_apuracao.getSelectedObjects() != null) {
+                    loading.setVisible(true);
+                    corrigeEstrutura();
+                    corrigeItensNulos();
+                    corrigePisEntrada();
+                    corrigePisSaida();
+                    corrigeAliquotas();
+                    apurar();
+                    loading.setVisible(false);
+                } else {
+                    txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nSelecione Pelo menos uma opção!");
+                }
+            }
         }
+        );
+        acao.start();
     }//GEN-LAST:event_btn_executarActionPerformed
 
     private void chx_pis_entradaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chx_pis_entradaActionPerformed
@@ -866,7 +888,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_chx_selecionaAllMousePressed
 
     private void btn_buscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_buscarActionPerformed
-        listaProdutos(st);
+        listaProdutosNCM(st);
     }//GEN-LAST:event_btn_buscarActionPerformed
 
     private void btn_desativarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_desativarActionPerformed
@@ -910,8 +932,19 @@ public class Frm_Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_tabela3KeyPressed
 
     private void txt_filtroNatReceitaKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txt_filtroNatReceitaKeyReleased
-        filtrar(txt_filtroNatReceita, tabela3, qtdeNatReceita);
+        txt_filtroNatReceita.setText(txt_filtroNatReceita.getText().trim());
+        filtrar(txt_filtroNatReceita, tabela3, loading);
     }//GEN-LAST:event_txt_filtroNatReceitaKeyReleased
+
+    private void tabela3FocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_tabela3FocusGained
+
+    }//GEN-LAST:event_tabela3FocusGained
+
+    private void tabela3MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tabela3MousePressed
+//        if(tabela3.getSelectedColumnCount()==1){
+//            tabela3.setColumnSelectionInterval(2, 2);
+//        }
+    }//GEN-LAST:event_tabela3MousePressed
 
     /**
      * @param args the command line arguments
@@ -952,6 +985,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JProgressBar barra;
     private javax.swing.JButton btn_bloquear;
     private javax.swing.JButton btn_buscar;
     private javax.swing.JButton btn_desativar;
@@ -962,7 +996,6 @@ public class Frm_Principal extends javax.swing.JFrame {
     private javax.swing.JCheckBox chx_apuracao;
     private javax.swing.JCheckBox chx_ativo;
     private javax.swing.JCheckBox chx_bloqueado;
-    private javax.swing.JCheckBox chx_emBranco;
     private javax.swing.JCheckBox chx_estrutura;
     private javax.swing.JCheckBox chx_itens_null;
     private javax.swing.JCheckBox chx_pis_entrada;
@@ -972,7 +1005,6 @@ public class Frm_Principal extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -984,6 +1016,7 @@ public class Frm_Principal extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JLabel loading;
     private javax.swing.JPanel pnl_aba1;
     private javax.swing.JPanel pnl_aba2;
     private javax.swing.JPanel pnl_aba3;
@@ -993,7 +1026,6 @@ public class Frm_Principal extends javax.swing.JFrame {
     private javax.swing.JLabel qtdeNCM;
     private javax.swing.JLabel qtdeNatReceita;
     private javax.swing.JLabel qtdePisCofins;
-    private javax.swing.JLabel razao;
     private javax.swing.JTable tabela1;
     private javax.swing.JTable tabela2;
     private javax.swing.JTable tabela3;
@@ -1004,19 +1036,19 @@ public class Frm_Principal extends javax.swing.JFrame {
     private javax.swing.JTextField txt_validade;
     // End of variables declaration//GEN-END:variables
 
-    private void listaProdutos(Statement st) {
+    private void listaProdutosNCM(Statement st) {
         model = getModelByTabela(tabela1);
         limpaTabela(model);
         try {
-            rs = st.executeQuery(validaEmBranco());
+            rs = st.executeQuery("SELECT P.CODPROD,P.DESCRICAO,C.CODIGONCM FROM PRODUTO P \n"
+                    + "                    inner JOIN CLASFISC C ON P.CODCLASFIS=C.CODCLASFIS\n"
+                    + "                     WHERE P.ATIVO = '" + validaCheckbox(chx_ativo) + "'\n"
+                    + "                     and P.prodbloqueado = '" + validaCheckbox(chx_bloqueado) + "'\n"
+                    + "                     order by p.descricao;");
             while (rs.next()) {
-                if (chx_emBranco.getSelectedObjects() != null) {
-                    String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO")};
-                    model.addRow(linha);
-                } else {
-                    String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO"), rs.getString("CODIGONCM")};
-                    model.addRow(linha);
-                }
+                String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO"), rs.getString("CODIGONCM")};
+                model.addRow(linha);
+                barra.setValue(barra.getValue() + 1);
             }
             getCountRow(tabela1, qtdeNCM);
         } catch (Exception e) {
@@ -1027,11 +1059,13 @@ public class Frm_Principal extends javax.swing.JFrame {
     private void listaProdutosPis(Statement st) {
         model = getModelByTabela(tabela2);
         limpaTabela(model);
+        ResultSet rs1;
         try {
-            rs = st.executeQuery("SELECT * FROM PRODUTO P INNER JOIN PRODUTODETALHE D ON P.CODPROD=D.CODPROD ORDER BY p.descricao");
-            while (rs.next()) {
-                String[] linha = new String[]{rs.getString("CODPROD"), rs.getString("DESCRICAO"), rs.getString("PIS_CST")};
+            rs1 = st.executeQuery("SELECT p.codprod,p.descricao,d.pis_cst FROM PRODUTO P INNER JOIN PRODUTODETALHE D ON P.CODPROD=D.CODPROD ORDER BY p.descricao");
+            while (rs1.next()) {
+                String[] linha = new String[]{rs1.getString("CODPROD"), rs1.getString("DESCRICAO"), rs1.getString("PIS_CST")};
                 model.addRow(linha);
+                barra.setValue(barra.getValue() + 1);
             }
             getCountRow(tabela2, qtdePisCofins);
         } catch (Exception e) {
@@ -1047,6 +1081,7 @@ public class Frm_Principal extends javax.swing.JFrame {
             while (rs.next()) {
                 String[] linha = new String[]{rs.getString("CODCLASFIS"), rs.getString("CODIGONCM"), rs.getString("CODNATRECEITA")};
                 model.addRow(linha);
+                barra.setValue(barra.getValue() + 1);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Erro.\n" + e.getMessage());
@@ -1055,23 +1090,23 @@ public class Frm_Principal extends javax.swing.JFrame {
         }
     }
 
-    private void validaNatReceita(String codigo, String natReceita) {
-        if (natReceita.length() == 3) {
+    private void validaNatReceita(String codigo, String receita) {
+        if (receita.length() == 3) {
             try {
-                rs = st.executeQuery("SELECT * FROM NATRECEITA WHERE CODRECEITA= '" + natReceita + "'");
+                rs = st.executeQuery("SELECT * FROM NATRECEITA WHERE CODRECEITA= '" + receita + "'");
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Erro ao buscar código natureza da receita: " + natReceita + ".\n" + e.getMessage());
+                JOptionPane.showMessageDialog(null, "Erro ao buscar código natureza da receita: " + receita + ".\n" + e.getMessage());
             }
             try {
                 if (rs.next()) {
-                    st.executeUpdate("UPDATE CLASFISC SET CODNATRECEITA = '" + natReceita + "' WHERE codclasfis ='" + codigo + "'");
-                    JOptionPane.showMessageDialog(null, natReceita + " inserido com sucesso para o codigo " + codigo);
+                    st.executeUpdate("UPDATE CLASFISC SET CODNATRECEITA = '" + receita + "' WHERE codclasfis ='" + codigo + "';");
+                    JOptionPane.showMessageDialog(null, receita + " inserido com sucesso para o codigo " + codigo);
                 } else {
-                    insereNatReceita(natReceita);
+                    insereNatReceita(receita);
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, "Erro ao gravar a NATUREZA DA RECEITA "
-                        + natReceita + " no codigo " + codigo + ".\n" + e.getMessage());
+                        + receita + " no codigo " + codigo + ".\n" + e.getMessage());
             }
         } else {
             JOptionPane.showMessageDialog(null, "NAT. RECEITA deve conter 3 caracteres!");
@@ -1140,11 +1175,14 @@ public class Frm_Principal extends javax.swing.JFrame {
                     click = 0;
                 } else {
                     if (tabela == 2) {
-                        validaPis(tabela2.getValueAt(tabela2.getSelectedRow(), 2).toString(), tabela2.getValueAt(tabela2.getSelectedRow(), 0).toString());
-                        click = 0;
+                        if (tabela2.getSelectedRowCount() == 1) {
+                            validaPis(tabela2.getValueAt(tabela2.getSelectedRow(), 2).toString(), tabela2.getValueAt(tabela2.getSelectedRow(), 0).toString());
+                            click = 0;
+                        }
                     } else {
                         if (tabela == 3) {
-                            validaNatReceita(tabela3.getValueAt(tabela3.getSelectedRow(), 0).toString(), tabela3.getValueAt(tabela3.getSelectedRow(), 2).toString());
+                            validaNatReceita(tabela3.getValueAt(tabela3.getSelectedRow(), 0).toString(),
+                                    tabela3.getValueAt(tabela3.getSelectedRow(), 2).toString());
                         }
                     }
                 }
@@ -1204,32 +1242,35 @@ public class Frm_Principal extends javax.swing.JFrame {
 
     private void validaPis(String pis, String codprod) {
         try {
-            if ((pis.compareTo("01") == 0) && (tabela2.getSelectedRow() >= 0)) {
+            if (pis.compareTo("01") == 0) {
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST = '" + pis + "',COFINS_CST='" + pis + "',"
                         + "                                 PISENT_CST='50',COFINSENT_CST='50',"
                         + "                                 ALIQPIS='1.65',ALIQCOFINS='7.60',"
                         + "                                 ALIQPISENT='1.65',ALIQCOFINSENT='7.60' WHERE CODPROD ='" + codprod + "'");
                 JOptionPane.showMessageDialog(null, "PIS INSERIDO COM SUCESSO!");
-            } else if ((pis.compareTo("04") == 0) && (tabela2.getSelectedRow() >= 0)) {
+            } else if (pis.compareTo("04") == 0) {
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST = '" + pis + "',COFINS_CST='" + pis + "',"
                         + "                                 PISENT_CST='70',COFINSENT_CST='70',"
                         + "                                 ALIQPIS='0.00',ALIQCOFINS='0.00',"
                         + "                                 ALIQPISENT='0.00',ALIQCOFINSENT='0.00' WHERE CODPROD ='" + codprod + "'");
                 JOptionPane.showMessageDialog(null, "PIS INSERIDO COM SUCESSO!");
-            } else if ((pis.compareTo("06") == 0) && (tabela2.getSelectedRow() >= 0)) {
+            } else if (pis.compareTo("06") == 0) {
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST = '" + pis + "',COFINS_CST='" + pis + "',"
                         + "                                 PISENT_CST='73',COFINSENT_CST='73',"
                         + "                                 ALIQPIS='0.00',ALIQCOFINS='0.00',"
                         + "                                 ALIQPISENT='0.00',ALIQCOFINSENT='0.00' WHERE CODPROD ='" + codprod + "'");
                 JOptionPane.showMessageDialog(null, "PIS INSERIDO COM SUCESSO!");
+            } else if (pis.compareTo("49") == 0) {
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST = '" + pis + "',COFINS_CST='" + pis + "',"
+                        + "                                 PISENT_CST='98',COFINSENT_CST='98',"
+                        + "                                 ALIQPIS='0.00',ALIQCOFINS='0.00',"
+                        + "                                 ALIQPISENT='0.00',ALIQCOFINSENT='0.00' WHERE CODPROD ='" + codprod + "'");
+                JOptionPane.showMessageDialog(null, "PIS INSERIDO COM SUCESSO!");
             } else {
                 JOptionPane.showMessageDialog(null, "PIS DE SAIDA INVALIDO!");
-                JOptionPane.showMessageDialog(null, "SELECIONE UM PIS E CLICK EM 'ENTER'!");
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Erro ao validar PIS informado.\n " + e.getMessage());
-        } finally {
-            listaProdutosPis(st);
         }
     }
 
@@ -1260,6 +1301,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                 rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PISENT_CST <>"
                         + " COFINSENT_CST OR (PIS_CST='01' AND PISENT_CST<>'50')\n"
                         + "                        OR (PIS_CST='04' AND PISENT_CST<>'70')\n"
+                        + "                        OR (PIS_CST='49' AND PISENT_CST<>'98')\n"
                         + "                        OR (PIS_CST='06' AND PISENT_CST<>'73')");
                 if (rs.next()) {
                     quantidade = rs.getString("qtde");
@@ -1270,6 +1312,7 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
             txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n\nPis/Cofins de Entrada" + "\nRealizando Correções... ");
             try {
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PISENT_CST='98' WHERE PIS_CST='49';");
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PISENT_CST='50' WHERE PIS_CST='01';");
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PISENT_CST='70' WHERE PIS_CST='04';");
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PISENT_CST='73' WHERE PIS_CST='06';");
@@ -1290,6 +1333,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                 rs = st.executeQuery("SELECT COUNT(*) as qtde FROM PRODUTODETALHE WHERE PIS_CST <> COFINS_CST\n"
                         + "                         OR (PISENT_CST='50' AND PIS_CST<>'01')\n"
                         + "                         OR (PISENT_CST='70' AND PIS_CST<>'04')\n"
+                        + "                         OR (PISENT_CST='98' AND PIS_CST<>'49')\n"
                         + "                         OR (PISENT_CST='73' AND PIS_CST<>'06')");
                 if (rs.next()) {
                     quantidade = rs.getString("qtde");
@@ -1300,6 +1344,7 @@ public class Frm_Principal extends javax.swing.JFrame {
             }
             txt_areaProcesso.setText(txt_areaProcesso.getText() + "\n\nPis/Cofins de Saida" + "\nRealizando Correções... ");
             try {
+                st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST='49' WHERE PISENT_CST='98';");
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST='01' WHERE PISENT_CST='50';");
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST='04' WHERE PISENT_CST='70';");
                 st.executeUpdate("UPDATE PRODUTODETALHE SET PIS_CST='06' WHERE PISENT_CST='73';");
@@ -1320,6 +1365,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                 rs = st.executeQuery("select COUNT(*) as qtde from produtodetalhe where (ALIQPIS<>ALIQPISENT or ALIQCOFINS<>ALIQCOFINSENT) or"
                         + "(PIS_CST='01' AND (ALIQPIS<>'1.65' OR ALIQPISENT<>'1.65')) OR"
                         + "(PIS_CST='04' AND (ALIQPIS<>'0.00' OR ALIQPISENT<>'0.00')) OR"
+                        + "(PIS_CST='49' AND (ALIQPIS<>'0.00' OR ALIQPISENT<>'0.00')) OR"
                         + "(PIS_CST='06' AND (ALIQPIS<>'0.00' OR ALIQPISENT<>'0.00'))");
                 if (rs.next()) {
                     quantidade = rs.getString("qtde");
@@ -1333,6 +1379,7 @@ public class Frm_Principal extends javax.swing.JFrame {
                 st.executeUpdate("UPDATE PRODUTODETALHE SET ALIQPIS='1.65',ALIQCOFINS='7.60',ALIQPISENT='1.65',ALIQCOFINSENT='7.60' WHERE PIS_CST='01';");
                 st.executeUpdate("UPDATE PRODUTODETALHE SET ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE PIS_CST='04';\n");
                 st.executeUpdate("UPDATE PRODUTODETALHE SET ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE PIS_CST='06';\n");
+                st.executeUpdate("UPDATE PRODUTODETALHE SET ALIQPIS=0,ALIQCOFINS=0,ALIQPISENT=0,ALIQCOFINSENT=0 WHERE PIS_CST='49';\n");
                 st.executeUpdate("UPDATE PRODUTODETALHE SET ALIQPIS=ALIQPISENT,ALIQCOFINS=ALIQCOFINSENT;");
                 txt_areaProcesso.setText(txt_areaProcesso.getText() + "\nCorreções Feitas: " + quantidade);
             } catch (Exception e) {
@@ -1504,7 +1551,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
         } finally {
-            listaProdutos(st);
+            listaProdutosNCM(st);
         }
     }
 
@@ -1520,7 +1567,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
         } finally {
-            listaProdutos(st);
+            listaProdutosNCM(st);
         }
     }
 
@@ -1538,6 +1585,8 @@ public class Frm_Principal extends javax.swing.JFrame {
                             st.executeUpdate("UPDATE CLASFISC SET CODNATRECEITA = '" + natReceita + "' WHERE CODCLASFIS ='"
                                     + tabela3.getValueAt(tabela3.getSelectedRow(), 0).toString() + "';");
                         }
+                        JOptionPane.showMessageDialog(null, natReceita + " inserido com sucesso para o codigo "
+                                + tabela3.getValueAt(tabela3.getSelectedRow(), 0));
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(null, e.getMessage());
                     }
@@ -1546,5 +1595,35 @@ public class Frm_Principal extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(null, "Erro ao retornar a quantidade de natureza da receita.\n" + e.getMessage());
             }
         }
+    }
+
+    private int contaQtdeDeItens() {
+        try {
+            //aquii
+            int qtdeProdutosNCM = 0;
+            int qtdeProdutosPis = 0;
+            int qtdeNatReceita = 0;
+            rs = st.executeQuery("SELECT count(*) qtde FROM PRODUTO P \n"
+                    + "                    inner JOIN CLASFISC C ON P.CODCLASFIS=C.CODCLASFIS\n"
+                    + "                     WHERE P.ATIVO = '" + validaCheckbox(chx_ativo) + "'\n"
+                    + "                     and P.prodbloqueado = '" + validaCheckbox(chx_bloqueado) + "';");
+            if (rs.next()) {
+                qtdeProdutosNCM = Integer.parseInt(rs.getString("qtde"));
+            }
+            rs = st.executeQuery("SELECT count(*) qtde FROM PRODUTO P "
+                    + "INNER JOIN PRODUTODETALHE D ON P.CODPROD=D.CODPROD");
+            if (rs.next()) {
+                qtdeProdutosPis = Integer.parseInt(rs.getString("qtde"));
+            }
+            rs = st.executeQuery("SELECT count(*) qtde FROM CLASFISC");
+            if (rs.next()) {
+                qtdeNatReceita = Integer.parseInt(rs.getString("qtde"));
+            }
+            return qtdeProdutosNCM + qtdeProdutosPis + qtdeNatReceita;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "erro ao contar a quantidade de produtos!\n" + e);
+            return 0;
+        }
+
     }
 }
