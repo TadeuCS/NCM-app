@@ -5,9 +5,7 @@
 package View;
 
 import Util.PropertiesManager;
-import Util.TableConfig;
 import Util.Validade;
-import java.awt.Event;
 import java.awt.event.KeyEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,7 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javafx.scene.layout.Region;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -93,7 +90,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         try {
             rs = st.executeQuery("SELECT * FROM FILIAIS");
             while (rs.next()) {
-                this.setTitle(this.getTitle() + rs.getString("NOMEEMPRESA") + "\t\t");
+                this.setTitle(this.getTitle() + "                            "+rs.getString("NOMEEMPRESA"));
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Erro ao carregar o nome da Empresa! \n" + e.getMessage());
@@ -247,7 +244,7 @@ public class Frm_Principal extends javax.swing.JFrame {
         qtdeNatReceita = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("NCM App 1.3");
+        setTitle("NCM App 1.4");
         setResizable(false);
 
         pnl_aba1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
